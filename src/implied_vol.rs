@@ -493,6 +493,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "requires GPU adapter (Apple Silicon); run with --ignored"]
     fn test_iv_recovery_gpu() {
         let gpu_solver = GpuIVSolver::new();
 
@@ -517,6 +518,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "requires GPU adapter (Apple Silicon); run with --ignored"]
     fn test_iv_gpu_matches_cpu() {
         let gpu_solver = GpuIVSolver::new();
 

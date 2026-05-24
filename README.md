@@ -1,15 +1,17 @@
-# ngv_opx — Rust based option pricer with Python support
+# ngv_opx
+
+[![tests](https://github.com/westonplatter/ngv_opx/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/westonplatter/ngv_opx/actions/workflows/tests.yml)
+[![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue)](https://www.python.org/)
+[![Rust](https://img.shields.io/badge/rust-stable-orange?logo=rust)](https://www.rust-lang.org/)
+[![License: BSD 3-Clause](https://img.shields.io/badge/license-BSD%203--Clause-blue)](LICENSE)
 
 A Rust + Python option pricing and implied-volatility toolkit.
 
-The Rust core is exposed to Python via PyO3 / maturin, with both scalar and vectorized
-NumPy entry points.
+The Rust core is exposed to Python via PyO3 / maturin, with both scalar and vectorized NumPy entry points.
 
 ## Current Scope
 
-The current release covers **Black-76 only** — the standard model for
-options on futures. Black-Scholes-Merton/BSM (spot underliers) and 
-additional models are planned but not yet shipped.
+So far, this repo only supports **Black-76 only** — the standard model for options on futures. I'll implemenet other pricing models in the future. See tabel for current matrix of coverage and features.
 
 | Pricer / Model              | Pricing | Implied Vol | 1st Order Greeks | 2nd Order Greeks | GPU Path | Status             |
 |-----------------------------|:-------:|:-----------:|:----------------:|:----------------:|:--------:|--------------------|
@@ -26,12 +28,10 @@ Legend: ✅ available · 🚧 in progress / experimental · ⛔ not started
 
 ## Requirements
 
-- **Black-76 CPU path (production):** runs anywhere Rust + Python do —
-  Linux, macOS (Intel or Apple Silicon), Windows.
-- **wgpu/Metal GPU path (experimental, legacy f32 BSM only):** requires
-  macOS with Apple Silicon (M1/M2/M3).
+- **Black-76 CPU path (production):** runs anywhere Rust + Python do — Linux, macOS (Intel or Apple Silicon), Windows.
+- **wgpu/Metal GPU path (experimental, legacy f32 BSM only):** requires macOS with Apple Silicon (M1+).
 - Rust toolchain (install via [rustup](https://rustup.rs/))
-- Python 3.10+ and [uv](https://github.com/astral-sh/uv)
+- Python 3.9+ and [uv](https://github.com/astral-sh/uv)
 
 ## Quick Start
 
@@ -96,17 +96,13 @@ ivs    = ngv_opx.black76_implied_volatility_vectorized(
 )
 ```
 
-The IV solver returns `-1.0` as a **sentinel** when IV is mathematically
-undefined (`T = 0`, price below intrinsic, price above the discounted
-upper bound). Callers must check for this — see `examples/example.py`
-for handling and `tests/test_black76_vs_vollib.py` for the contract.
+The IV solver returns `-1.0` as a **sentinel** when IV is mathematically undefined (`T = 0`, price below intrinsic, price above the discounted upper bound). Callers must check for this — see `examples/example.py` for handling and `tests/test_black76_vs_vollib.py` for the contract.
 
 ## Algorithm Details
 
 ### Black-76 Formula
 
-For an option on a forward `F` struck at `K`, with risk-free rate `r`,
-vol `σ`, and time to expiry `T`:
+For an option on a forward `F` struck at `K`, with risk-free rate `r`, vol `σ`, and time to expiry `T`:
 
 ```
 C = e^(-rT) [ F · N(d₁) - K · N(d₂) ]
@@ -117,32 +113,7 @@ with `d₁ = (ln(F/K) + ½σ²T) / (σ√T)` and `d₂ = d₁ - σ√T`.
 
 ### Implied Volatility
 
-Newton-Raphson on vega, with Brenner-Subrahmanyam (ATM) seed. f64
-throughout because deep-ITM/OTM short-dated options on CL push f32
-past its ~7 digits of headroom (time value can be sub-1e-7 of the
-forward).
-
-## Project Structure
-
-```
-ngv_opx/
-├── Cargo.toml
-├── pyproject.toml
-├── README.md
-├── examples/
-│   ├── example.py        # CL surface + 0-DTE / sub-day edge cases
-│   └── bench_native.rs
-├── src/
-│   ├── black76.rs        # Black-76 pricer + IV solver (CPU, f64)
-│   ├── implied_vol.rs    # BSM IV (legacy f32 / GPU path)
-│   ├── shader.wgsl       # BSM pricing compute shader
-│   ├── iv_shader.wgsl    # BSM IV compute shader
-│   ├── python.rs         # PyO3 bindings
-│   ├── lib.rs
-│   └── main.rs           # Rust CLI / benchmarks
-└── tests/
-    └── test_black76_vs_vollib.py
-```
+Newton-Raphson on vega, with Brenner-Subrahmanyam (ATM) seed. f64 throughout because deep-ITM/OTM short-dated options on CL push f32 past its ~7 digits of headroom (time value can be sub-1e-7 of the forward).
 
 ## License
 
