@@ -1,4 +1,4 @@
-# ngv_opx — NGV Option Pricer
+# ngv_opx — Rust based option pricer with Python support
 
 A Rust + Python option pricing and implied-volatility toolkit.
 
