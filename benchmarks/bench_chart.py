@@ -315,6 +315,11 @@ def render(paths) -> Path:
     )
     out = Path(__file__).parent / "bench_chart.html"
     fig.write_html(out, include_plotlyjs="cdn")
+    try:
+        out_png = out.with_suffix(".png")
+        fig.write_image(out_png, width=1600, height=1267, scale=2)
+    except Exception as e:
+        print(f"  (skipped PNG export: {e})", flush=True)
     return out
 
 
