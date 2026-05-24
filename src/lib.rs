@@ -317,6 +317,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "requires GPU adapter (Apple Silicon); run with --ignored"]
     fn test_gpu_matches_cpu() {
         let gpu_pricer = GpuPricer::new();
 
