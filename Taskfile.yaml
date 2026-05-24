@@ -1,0 +1,48 @@
+version: "3"
+
+tasks:
+  list:
+    desc: List all available tasks
+    aliases: [l]
+    cmd: task --list-all
+
+  build:
+    desc: Build the Rust extension into the current uv venv (release mode)
+    cmd: uv run maturin develop --release
+
+  test:
+    desc: Run Rust unit tests and Python pytest suite
+    cmds:
+      - cargo test --lib
+      - uv run pytest tests/
+
+  test:rust:
+    desc: Rust unit tests only
+    cmd: cargo test --lib
+
+  test:py:
+    desc: Python pytest suite only (cross-validates Black-76 vs py_vollib)
+    cmd: uv run pytest tests/
+
+  bench:
+    desc: CPU benchmark — {Python, Rust} x {single, vectorized} + py_vollib
+    deps: [build]
+    cmd: uv run python benchmarks/bench_cpu.py
+
+  bench:chart:
+    desc: Plotly chart of the 5 pricing paths (writes benchmarks/bench_chart.html)
+    deps: [build]
+    cmd: uv run python benchmarks/bench_chart.py
+
+  bench:all-pythons:
+    desc: Run bench against Python 3.11, 3.12, 3.13 — saves JSON per version under benchmarks/results/
+    cmd: bash benchmarks/bench_all_pythons.sh
+
+  bench:compare:
+    desc: Cross-version comparison tables + Plotly chart (reads benchmarks/results/*.json)
+    cmd: uv run python benchmarks/bench_compare.py
+
+  example:
+    desc: Run the Black-76 IV roundtrip example on the crude oil surface
+    deps: [build]
+    cmd: uv run python example.py

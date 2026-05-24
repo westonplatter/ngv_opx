@@ -1,0 +1,39 @@
+[build-system]
+requires = ["maturin>=1.4,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "ngv-opx"
+version = "0.1.0"
+description = "NGV option pricer: Rust core (CPU + GPU) with Python interface. Black-Scholes today; Black-76 and structure P&L planned."
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Office/Business :: Financial",
+    "Topic :: Scientific/Engineering",
+]
+dependencies = [
+    "numpy>=1.20",
+]
+
+[project.optional-dependencies]
+dev = [
+    "maturin>=1.4,<2.0",
+    "pytest>=7.0",
+    "py_vollib>=1.0.1",
+    "plotly>=5.20",
+]
+
+[tool.maturin]
+features = ["python"]
+python-source = "python"
+module-name = "ngv_opx"
