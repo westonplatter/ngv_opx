@@ -5,9 +5,7 @@
 [![Rust](https://img.shields.io/badge/rust-stable-orange?logo=rust)](https://www.rust-lang.org/)
 [![License: BSD 3-Clause](https://img.shields.io/badge/license-BSD%203--Clause-blue)](LICENSE)
 
-A Rust + Python option pricing and implied-volatility toolkit.
-
-The Rust core is exposed to Python via PyO3 / maturin, with both scalar and vectorized NumPy entry points.
+A Rust option-pricing and implied-volatility core, with first-class **Python** (PyO3 / maturin) and **JavaScript/WebAssembly** (`@ngv/opx`, browser + Node) bindings. f64 throughout, scalar and vectorized entry points in each binding.
 
 ## Current Scope
 
@@ -68,7 +66,11 @@ task example          # run the worked CL Black-76 example
 | `task bench:readme`   | Run benchmarks, regenerate `bench_chart.{html,png}`, and update README table |
 | `task list` / `task l`| List all available tasks                                                    |
 
-## Python Usage (Black-76)
+## Usage
+
+Both bindings expose the same Black-76 contract (f64, scalar + vectorized, `-1.0` IV sentinel). Pick the section for your language.
+
+### Python
 
 ```python
 import numpy as np
@@ -101,6 +103,34 @@ ivs    = ngv_opx.black76_implied_volatility_vectorized(
 ```
 
 The IV solver returns `-1.0` as a **sentinel** when IV is mathematically undefined (`T = 0`, price below intrinsic, price above the discounted upper bound). Callers must check for this — see `examples/example.py` for handling and `tests/test_black76_vs_vollib.py` for the contract.
+
+### JavaScript
+
+Install from npm:
+
+```bash
+npm install @ngv/opx
+```
+
+```ts
+import { black76, impliedVolBatch } from "@ngv/opx";
+
+// Single option: price a 30-day ATM CL call
+const price = black76(75, 75, 0.045, 0.32, 30 / 365, /* isCall */ true);
+
+// Vectorized: whole surface in one call.
+// Inputs are Float64Array; isCalls is Uint8Array (0=put, 1=call).
+const ivs = impliedVolBatch(
+  Float64Array.of(75, 75, 75),                     // forwards
+  Float64Array.of(75, 80, 70),                     // strikes
+  Float64Array.of(0.045, 0.045, 0.045),            // rates
+  Float64Array.of(30 / 365, 30 / 365, 30 / 365),   // times
+  Float64Array.of(2.99, 1.20, 5.40),               // market prices
+  Uint8Array.of(1, 1, 0),                          // is_calls
+);
+```
+
+In the browser, `await init()` once before the first call. Node needs no init. Same `-1.0` sentinel applies. See [`bindings/wasm/README.md`](bindings/wasm/README.md) for the full API.
 
 ## Benchmarks
 
