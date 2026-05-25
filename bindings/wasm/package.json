@@ -13,7 +13,8 @@
       "import": "./index-node.mjs",
       "require": "./index-node.cjs",
       "default": "./index-node.mjs"
-    }
+    },
+    "./pkg-web/ngv_opx_wasm_bg.wasm": "./pkg-web/ngv_opx_wasm_bg.wasm"
   },
   "files": [
     "index-node.cjs",

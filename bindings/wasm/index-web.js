@@ -20,8 +20,20 @@ import wasmInit, {
 
 let _ready = null;
 
+/**
+ * Initialize the wasm module.
+ *
+ * @param {object} [opts]
+ * @param {string | URL | Request} [opts.wasmUrl] Explicit URL to the
+ *   wasm binary. **Required when consuming this package through a bundler
+ *   like Vite or webpack** — pass `new URL("@ngv/opx/pkg-web/ngv_opx_wasm_bg.wasm?url", import.meta.url)`
+ *   or use the bundler's `?url` import syntax. If omitted, init falls back
+ *   to wasm-pack's default URL resolution, which only works when the
+ *   package files are served at their published relative paths (no
+ *   bundler / no asset hashing).
+ */
 export async function init(opts = {}) {
-  if (!_ready) _ready = wasmInit();
+  if (!_ready) _ready = wasmInit(opts.wasmUrl);
   await _ready;
   return {
     gpu: false, // CPU-only in v1; WebGPU path lands in a follow-up unit

@@ -85,5 +85,18 @@ export interface InitResult {
  *
  * Required in the browser before calling any other function; a no-op in
  * Node (kept for API symmetry).
+ *
+ * When consumed through a bundler (Vite, webpack, esbuild, etc.), pass
+ * `wasmUrl` explicitly using the bundler's URL-import syntax — bundlers
+ * rewrite asset paths and the default `import.meta.url` resolution will
+ * 404. Example (Vite):
+ *
+ * ```ts
+ * import wasmUrl from "@ngv/opx/pkg-web/ngv_opx_wasm_bg.wasm?url";
+ * await init({ wasmUrl });
+ * ```
  */
-export function init(opts?: { gpu?: boolean }): Promise<InitResult>;
+export function init(opts?: {
+  gpu?: boolean;
+  wasmUrl?: string | URL | Request;
+}): Promise<InitResult>;

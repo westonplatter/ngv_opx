@@ -1,9 +1,13 @@
 import { init, impliedVol, impliedVolBatch, version } from "@ngv/opx";
+// Vite resolves this to a hashed asset URL at build time and to a
+// dev-server URL at dev time, which is what wasm-pack's init() needs.
+// @ts-expect-error — Vite ?url import has no declared type.
+import wasmUrl from "@ngv/opx/pkg-web/ngv_opx_wasm_bg.wasm?url";
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
 async function main() {
-  await init();
+  await init({ wasmUrl });
   console.log("[ngv-opx] wasm loaded, version =", version());
 
   // ---- live IV solver ----
