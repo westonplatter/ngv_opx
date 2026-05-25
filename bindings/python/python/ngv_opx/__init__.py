@@ -8,6 +8,7 @@ from ngv_opx.ngv_opx import (
     black76_implied_volatility,
     black76_implied_volatility_vectorized,
     get_gpu_name,
+    gpu_available,
 )
 
 __all__ = [
@@ -20,4 +21,5 @@ __all__ = [
     "black76_implied_volatility",
     "black76_implied_volatility_vectorized",
     "get_gpu_name",
+    "gpu_available",
 ]

@@ -7,7 +7,7 @@
 //!
 //! Run: cargo run --release --example bench_native
 
-use ngv_opx::black76::black76_price_batch_f64;
+use ngv_opx_core::black76::black76_price_batch_f64;
 use std::hint::black_box;
 use std::time::Instant;
 

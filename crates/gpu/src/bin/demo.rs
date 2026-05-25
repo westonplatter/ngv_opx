@@ -1,4 +1,5 @@
-use ngv_opx::{black_scholes_cpu, implied_vol, GpuPricer, OptionParams};
+use ngv_opx_core::{black_scholes_cpu, OptionParams};
+use ngv_opx_gpu::{run_iv_demo, GpuPricer};
 use std::env;
 use std::time::Instant;
 
@@ -152,10 +153,10 @@ fn main() {
 
     match command {
         "price" => run_pricing_demo(),
-        "iv" => implied_vol::run_iv_demo(),
+        "iv" => run_iv_demo(),
         "all" => {
             run_pricing_demo();
-            implied_vol::run_iv_demo();
+            run_iv_demo();
         }
         "help" | "--help" | "-h" => print_usage(),
         _ => {

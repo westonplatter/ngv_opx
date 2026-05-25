@@ -1,0 +1,13 @@
+[package]
+name = "ngv-opx-core"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Pure-Rust option pricing core: Black-76 + Black-Scholes CPU, no FFI."
+
+[lib]
+name = "ngv_opx_core"
+
+[dependencies]
+bytemuck = { version = "1.14", features = ["derive"] }
+libm = "0.2"

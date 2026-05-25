@@ -4,11 +4,13 @@
 //! Black-Scholes pricing and implied volatility solvers to Python.
 
 use numpy::{PyArray1, PyReadonlyArray1};
+use pyo3::exceptions::PyRuntimeError;
 use pyo3::prelude::*;
 
-use crate::black76::{black76_implied_vol_f64, black76_price_f64};
-use crate::implied_vol::{implied_volatility_batch_cpu, implied_volatility_cpu, GpuIVSolver, IVParams};
-use crate::{black_scholes_batch_cpu, black_scholes_cpu, GpuPricer, OptionParams};
+use ngv_opx_core::black76::{black76_implied_vol_f64, black76_price_f64};
+use ngv_opx_core::implied_vol::{implied_volatility_batch_cpu, implied_volatility_cpu, IVParams};
+use ngv_opx_core::{black_scholes_batch_cpu, black_scholes_cpu, OptionParams};
+use ngv_opx_gpu::{gpu_available as gpu_available_rs, GpuIVSolver, GpuPricer};
 
 /// Calculate the Black-Scholes price for a single option.
 ///
@@ -83,8 +85,10 @@ fn black_scholes_batch<'py>(
         .collect();
 
     let results = if use_gpu {
-        let pricer = GpuPricer::new();
-        pricer.price(&options)
+        match GpuPricer::try_new() {
+            Ok(pricer) => pricer.price(&options),
+            Err(_) => black_scholes_batch_cpu(&options),
+        }
     } else {
         black_scholes_batch_cpu(&options)
     };
@@ -167,8 +171,10 @@ fn implied_volatility_batch<'py>(
         .collect();
 
     let results = if use_gpu {
-        let solver = GpuIVSolver::new();
-        solver.solve(&options)
+        match GpuIVSolver::try_new() {
+            Ok(solver) => solver.solve(&options),
+            Err(_) => implied_volatility_batch_cpu(&options),
+        }
     } else {
         implied_volatility_batch_cpu(&options)
     };
@@ -176,14 +182,22 @@ fn implied_volatility_batch<'py>(
     PyArray1::from_vec_bound(py, results)
 }
 
+/// Cheap probe: returns True if a usable GPU adapter is available on this
+/// system. Does not initialize a device. Safe to call from CPU-only code.
+#[pyfunction]
+fn gpu_available() -> bool {
+    gpu_available_rs()
+}
+
 /// Get the name of the GPU being used for computations.
 ///
-/// Returns:
-///     GPU name as a string
+/// Raises:
+///     RuntimeError: if no GPU adapter is available on this system.
 #[pyfunction]
-fn get_gpu_name() -> String {
-    let pricer = GpuPricer::new();
-    pricer.gpu_name
+fn get_gpu_name() -> PyResult<String> {
+    GpuPricer::try_new()
+        .map(|p| p.gpu_name)
+        .map_err(|e| PyRuntimeError::new_err(e.to_string()))
 }
 
 /// Black-76 price for an option on a forward F (f64).
@@ -282,5 +296,6 @@ fn ngv_opx(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(black76_implied_volatility, m)?)?;
     m.add_function(wrap_pyfunction!(black76_implied_volatility_vectorized, m)?)?;
     m.add_function(wrap_pyfunction!(get_gpu_name, m)?)?;
+    m.add_function(wrap_pyfunction!(gpu_available, m)?)?;
     Ok(())
 }

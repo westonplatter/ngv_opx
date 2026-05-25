@@ -1,26 +1,13 @@
-[package]
-name = "ngv_opx"
-version = "0.1.0"
-edition = "2021"
-
-[lib]
-name = "ngv_opx"
-crate-type = ["cdylib", "rlib"]
-
-[[bin]]
-name = "ngv_opx"
-path = "src/main.rs"
-
-[dependencies]
-wgpu = "23"
-pollster = "0.4"
-bytemuck = { version = "1.14", features = ["derive"] }
-libm = "0.2"
-
-# Python bindings (optional)
-pyo3 = { version = "0.22", features = ["extension-module"], optional = true }
-numpy = { version = "0.22", optional = true }
-
-[features]
-default = []
-python = ["pyo3", "numpy"]
+[workspace]
+resolver = "2"
+members = [
+    "crates/core",
+    "crates/gpu",
+    "bindings/python",
+]
+# python binding is built via maturin (needs Python linker symbols);
+# exclude from default `cargo build`/`cargo test` to avoid bare-cargo link failures.
+default-members = [
+    "crates/core",
+    "crates/gpu",
+]

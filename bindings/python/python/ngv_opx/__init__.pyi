@@ -165,5 +165,17 @@ def implied_volatility_batch(
     ...
 
 def get_gpu_name() -> str:
-    """Return the name of the GPU used by the experimental wgpu/Metal path."""
+    """Return the name of the GPU used by the experimental wgpu/Metal path.
+
+    Raises:
+        RuntimeError: if no GPU adapter is available on this system.
+    """
+    ...
+
+def gpu_available() -> bool:
+    """Cheap probe: True if a usable GPU adapter is available on this system.
+
+    Does not initialize a device. Safe to call from CPU-only code paths to
+    decide whether to opt in to `use_gpu=True` on batch functions.
+    """
     ...

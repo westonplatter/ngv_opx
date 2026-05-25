@@ -1,0 +1,16 @@
+[package]
+name = "ngv-opx-python"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "PyO3 Python bindings for ngv-opx."
+
+[lib]
+name = "ngv_opx"
+crate-type = ["cdylib"]
+
+[dependencies]
+ngv-opx-core = { path = "../../crates/core" }
+ngv-opx-gpu = { path = "../../crates/gpu" }
+pyo3 = { version = "0.22", features = ["extension-module"] }
+numpy = "0.22"

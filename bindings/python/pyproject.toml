@@ -5,7 +5,7 @@ build-backend = "maturin"
 [project]
 name = "ngv-opx"
 version = "0.1.0"
-description = "NGV option pricer: Rust core (CPU + GPU) with Python interface. Black-Scholes today; Black-76 and structure P&L planned."
+description = "NGV option pricer: Rust core (CPU + GPU) with Python interface. Black-76 production, Black-Scholes experimental."
 requires-python = ">=3.8"
 classifiers = [
     "Programming Language :: Rust",
@@ -35,6 +35,6 @@ dev = [
 ]
 
 [tool.maturin]
-features = ["python"]
 python-source = "python"
 module-name = "ngv_opx"
+manifest-path = "Cargo.toml"

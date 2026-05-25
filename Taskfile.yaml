@@ -1,5 +1,8 @@
 version: "3"
 
+# All Python tasks run from bindings/python/ where pyproject.toml + uv.lock now
+# live. Rust tasks run from workspace root.
+
 tasks:
   list:
     desc: List all available tasks
@@ -7,21 +10,23 @@ tasks:
     cmd: task --list-all
 
   build:
-    desc: Build the Rust extension into the current uv venv (release mode)
+    desc: Build the Rust extension into the bindings/python uv venv (release mode)
+    dir: bindings/python
     cmd: uv run maturin develop --release
 
   test:
-    desc: Run Rust unit tests and Python pytest suite
+    desc: Run Rust workspace tests + Python pytest suite
     cmds:
-      - cargo test --lib
-      - uv run pytest tests/
+      - cargo test
+      - task: test:py
 
   test:rust:
-    desc: Rust unit tests only
-    cmd: cargo test --lib
+    desc: Rust workspace unit tests (core + gpu)
+    cmd: cargo test
 
   test:py:
-    desc: Python pytest suite only (cross-validates Black-76 vs py_vollib)
+    desc: Python pytest suite (cross-validates Black-76 vs py_vollib)
+    dir: bindings/python
     cmd: uv run pytest tests/
 
   bench:

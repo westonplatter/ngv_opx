@@ -507,15 +507,31 @@ dependencies = [
 ]
 
 [[package]]
-name = "ngv_opx"
+name = "ngv-opx-core"
 version = "0.1.0"
 dependencies = [
  "bytemuck",
  "libm",
- "numpy",
+]
+
+[[package]]
+name = "ngv-opx-gpu"
+version = "0.1.0"
+dependencies = [
+ "bytemuck",
+ "ngv-opx-core",
  "pollster",
- "pyo3",
  "wgpu",
+]
+
+[[package]]
+name = "ngv-opx-python"
+version = "0.1.0"
+dependencies = [
+ "ngv-opx-core",
+ "ngv-opx-gpu",
+ "numpy",
+ "pyo3",
 ]
 
 [[package]]

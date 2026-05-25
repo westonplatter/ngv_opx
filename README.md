@@ -44,8 +44,11 @@ it via `brew install go-task` (or see the Taskfile docs for other
 platforms), then:
 
 ```bash
+# Python project lives under bindings/python/ (post-restructure for TS bindings)
+cd bindings/python
 uv sync --extra dev   # one-time: dev deps incl. maturin
-task build            # build the Rust extension into the current uv venv
+cd -
+task build            # build the Rust extension into the bindings/python uv venv
 task example          # run the worked CL Black-76 example
 ```
 
