@@ -15,10 +15,11 @@ tasks:
     cmd: uv run maturin develop --release
 
   test:
-    desc: Run Rust workspace tests + Python pytest suite
+    desc: Run Rust workspace tests + Python pytest + JS parity tests
     cmds:
       - cargo test
       - task: test:py
+      - task: test:js
 
   test:rust:
     desc: Rust workspace unit tests (core + gpu)
@@ -28,6 +29,15 @@ tasks:
     desc: Python pytest suite (cross-validates Black-76 vs py_vollib)
     dir: bindings/python
     cmd: uv run pytest tests/
+
+  test:js:
+    desc: JS/wasm parity tests vs Python baseline (requires wasm-pack build first)
+    dir: bindings/wasm
+    cmds:
+      - wasm-pack build --target nodejs --out-dir pkg-node
+      - node tests/u4_black76.mjs
+      - node tests/u5_iv.mjs
+      - node tests/u8_package_shape.mjs
 
   # Bench/example tasks run from bindings/python so they pick up the venv where
   # `task build` installed the extension. The bench scripts themselves live at
