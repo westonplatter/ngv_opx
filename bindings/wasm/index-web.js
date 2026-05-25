@@ -19,6 +19,7 @@ import wasmInit, {
 } from "./pkg-web/ngv_opx_wasm.js";
 
 let _ready = null;
+let _readyUrl = undefined;
 
 /**
  * Initialize the wasm module.
@@ -33,7 +34,26 @@ let _ready = null;
  *   bundler / no asset hashing).
  */
 export async function init(opts = {}) {
-  if (!_ready) _ready = wasmInit(opts.wasmUrl);
+  // We cache the init promise (including rejections) on purpose: a failed
+  // wasm load is almost always a deployment/bundler bug, not a transient
+  // network blip, so silently retrying on the next call would hide the
+  // root cause. Callers that want to retry should reload the page.
+  if (!_ready) {
+    _ready = wasmInit(opts.wasmUrl);
+    _readyUrl = opts.wasmUrl;
+  } else if (
+    opts.wasmUrl !== undefined &&
+    String(opts.wasmUrl) !== String(_readyUrl)
+  ) {
+    // Second call asked for a different binary than the one already loading
+    // — wasm-pack only instantiates once per module, so the new URL would
+    // be silently ignored. Warn so the mismatch surfaces during development.
+    console.warn(
+      "[@ngv/opx] init() called again with a different wasmUrl; " +
+        "the originally-loaded module is reused. " +
+        `first=${String(_readyUrl)} second=${String(opts.wasmUrl)}`,
+    );
+  }
   await _ready;
   return {
     gpu: false, // CPU-only in v1; WebGPU path lands in a follow-up unit

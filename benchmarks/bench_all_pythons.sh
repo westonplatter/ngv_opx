@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Cross-version CPU benchmark: build & run benchmarks/bench_cpu.py against
-# Python 3.11, 3.12, 3.13. Each version gets its own uv-managed venv because
-# maturin produces a Python-version-specific .so.
+# Python 3.9, 3.10, 3.11, 3.12, 3.13. Each version gets its own uv-managed
+# venv because maturin produces a Python-version-specific .so.
 #
 # Usage:
 #   bash benchmarks/bench_all_pythons.sh
@@ -10,7 +10,7 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-PYTHONS="${PYTHONS:-3.11 3.12 3.13}"
+PYTHONS="${PYTHONS:-3.9 3.10 3.11 3.12 3.13}"
 DEPS=(maturin numpy scipy py_vollib)
 
 for ver in $PYTHONS; do

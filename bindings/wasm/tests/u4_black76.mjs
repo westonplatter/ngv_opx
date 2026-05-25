@@ -16,7 +16,7 @@ const opx = require(resolve(__dirname, "../pkg-node"));
 
 const baseline = JSON.parse(
   readFileSync(
-    resolve(__dirname, "../../python/tests/baselines/black76_baseline.json"),
+    resolve(__dirname, "../../../bindings/python/tests/baselines/black76_baseline.json"),
     "utf8",
   ),
 );
