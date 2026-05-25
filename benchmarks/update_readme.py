@@ -63,9 +63,11 @@ def build_html_table(paths) -> str:
         lang_cells.append(
             f'      <th align="center" colspan="{span}">{lang}</th>'
         )
+    # N spans all 4 header rows (language / library / variant / unit) so the
+    # left column lines up cleanly with the data rows below it.
     row1 = (
         '    <tr>\n'
-        '      <th rowspan="3" align="right">N</th>\n'
+        '      <th rowspan="4" align="right">N</th>\n'
         + "\n".join(lang_cells)
         + "\n    </tr>"
     )
@@ -85,6 +87,14 @@ def build_html_table(paths) -> str:
         var_cells.append(f'      <th align="center"><sub>{tag}</sub></th>')
     row3 = "    <tr>\n" + "\n".join(var_cells) + "\n    </tr>"
 
+    # Header row 4: unit. Every data cell below is per-option time in
+    # nanoseconds; surfacing the unit inside the table itself means readers
+    # don't have to scroll back to the prose to remember what "829.2" means.
+    unit_cells = [
+        '      <th align="center"><sub><i>ns / option</i></sub></th>'
+    ] * len(COLUMNS)
+    row4 = "    <tr>\n" + "\n".join(unit_cells) + "\n    </tr>"
+
     # Data rows.
     data_rows = []
     for n in sizes:
@@ -101,6 +111,7 @@ def build_html_table(paths) -> str:
         row1,
         row2,
         row3,
+        row4,
         "  </thead>",
         "  <tbody>",
         *data_rows,
@@ -115,8 +126,9 @@ def build_block(paths) -> str:
     return "\n".join([
         START,
         "",
-        f"Per-option time in nanoseconds (lower is faster). Measured on Python {pyver}.",
-        f"Header reads top-to-bottom as **language → library → call shape**, "
+        f"**All values are per-option time in nanoseconds (ns)** — lower is faster. "
+        f"Measured on Python {pyver}.",
+        f"Header reads top-to-bottom as **language → library → call shape → unit**, "
         f"matching `{HTML_REL}`. **Bold** marks the production `ngv_opx` paths.",
         "",
         table,
