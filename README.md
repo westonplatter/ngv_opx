@@ -112,14 +112,14 @@ Black-76 pricing throughput across implementations. Log-log; lower is faster.
 
 Per-option time in nanoseconds (lower is faster). Measured on Python 3.13.3.
 
-| N | Python pure | numpy/scipy | py_vollib | ngv_opx (single) | **ngv_opx (vec)** | **Rust ngv_opx** |
-|---:|---:|---:|---:|---:|---:|---:|
-| 10 | 920.8 | 720.8 | 2,237.5 | 337.5 | 87.5 | 33.3 |
-| 100 | 770.0 | 100.4 | 2,168.7 | 312.9 | 34.2 | 32.9 |
-| 1,000 | 731.2 | 40.0 | 2,077.2 | 302.6 | 33.2 | 31.8 |
-| 10,000 | 732.3 | 53.9 | 2,072.5 | 294.6 | 42.5 | 39.5 |
-| 100,000 | 729.3 | 62.9 | 2,154.0 | 300.6 | 43.9 | 42.5 |
-| 1,000,000 | 739.8 | 66.6 | 2,063.8 | 303.8 | 45.1 | 43.4 |
+| N | Python pure | numpy/scipy | py_vollib | ngv_opx (single) | **ngv_opx (vec)** | JS @ngv/opx (single) | **JS @ngv/opx (vec)** | **Rust ngv_opx** |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 10 | 812.5 | 720.8 | 2,225.0 | 362.5 | 120.8 | 320.8 | 266.6 | 33.4 |
+| 100 | 775.8 | 100.8 | 2,149.6 | 339.2 | 41.7 | 163.7 | 74.6 | 29.6 |
+| 1,000 | 746.5 | 41.3 | 2,153.7 | 341.8 | 43.0 | 203.4 | 61.2 | 32.8 |
+| 10,000 | 806.6 | 60.6 | 2,288.1 | 353.5 | 44.4 | 69.6 | 58.5 | 43.3 |
+| 100,000 | 723.0 | 65.0 | 2,102.2 | 331.6 | 40.7 | 65.6 | 56.3 | 41.6 |
+| 1,000,000 | 770.3 | 70.7 | 2,118.8 | 329.4 | 41.1 | 65.7 | 56.7 | 38.9 |
 
 Interactive version: [`benchmarks/bench_chart.html`](benchmarks/bench_chart.html) (open locally; GitHub doesn't render embedded JS).
 

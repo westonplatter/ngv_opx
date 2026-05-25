@@ -24,6 +24,8 @@ ORDERED = [
     "Python — py_vollib",
     "Python — ngv_opx (single)",
     "Python — ngv_opx (vectorized)",
+    "JavaScript — @ngv/opx (single)",
+    "JavaScript — @ngv/opx (vectorized)",
     "Rust — ngv_opx (vectorized)",
 ]
 
@@ -33,6 +35,8 @@ COL_HEADERS = [
     "py_vollib",
     "ngv_opx (single)",
     "**ngv_opx (vec)**",
+    "JS @ngv/opx (single)",
+    "**JS @ngv/opx (vec)**",
     "**Rust ngv_opx**",
 ]
 

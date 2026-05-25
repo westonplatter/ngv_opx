@@ -99,6 +99,8 @@ def collect():
         "Python — numpy/scipy":            {},
         "Python — ngv_opx (single)":       {},
         "Python — ngv_opx (vectorized)":   {},
+        "JavaScript — @ngv/opx (single)":     {},
+        "JavaScript — @ngv/opx (vectorized)": {},
         "Rust — ngv_opx (vectorized)":         {},
     }
     for n in SIZES:
@@ -146,6 +148,23 @@ def collect():
     native = json.loads(proc.stdout.strip().splitlines()[-1])
     for n_str, ns in native.items():
         paths["Rust — ngv_opx (vectorized)"][int(n_str)] = float(ns)
+
+    # JavaScript (wasm): same pattern — subprocess Node, parse the last JSON line.
+    # Requires `node` on PATH and bindings/wasm/pkg-node/ already built.
+    print("  running JavaScript (wasm) benchmark via node...", flush=True)
+    try:
+        js_proc = subprocess.run(
+            ["node", str(repo_root / "benchmarks" / "bench_wasm.mjs")],
+            cwd=repo_root, capture_output=True, text=True, check=True,
+        )
+        js = json.loads(js_proc.stdout.strip().splitlines()[-1])
+        for n_str, ns in js["js-single"].items():
+            paths["JavaScript — @ngv/opx (single)"][int(n_str)] = float(ns)
+        for n_str, ns in js["js-vec"].items():
+            paths["JavaScript — @ngv/opx (vectorized)"][int(n_str)] = float(ns)
+    except (subprocess.CalledProcessError, FileNotFoundError) as e:
+        print(f"  warning: skipping JS rows — {type(e).__name__}: {e}", flush=True)
+
     return paths
 
 
@@ -158,9 +177,7 @@ def _fmt_ns(x):
 
 
 def render(paths) -> Path:
-    # Two axes, period:
-    #   Language: Python or Rust (where the option math actually runs)
-    #   Pricer:   py_vollib | pure | numpy/scipy | ngv_opx
+    # Three language axes now: Python, JavaScript (wasm), Rust (native).
     PYTHON_GROUP = [
         "Python — pure (math.erf)",
         "Python — numpy/scipy",
@@ -168,24 +185,32 @@ def render(paths) -> Path:
         "Python — ngv_opx (single)",
         "Python — ngv_opx (vectorized)",
     ]
+    JS_GROUP = [
+        "JavaScript — @ngv/opx (single)",
+        "JavaScript — @ngv/opx (vectorized)",
+    ]
     RUST_GROUP = [
         "Rust — ngv_opx (vectorized)",
     ]
-    ORDERED = PYTHON_GROUP + RUST_GROUP
+    ORDERED = PYTHON_GROUP + JS_GROUP + RUST_GROUP
 
     # Visual differentiation: NGV solution stands out, other libs are muted.
     #   Rust ngv_opx       — purple   (the floor / fastest, highlighted)
-    #   Python ngv_opx     — blue     (the shipped product)
+    #   JavaScript ngv_opx — green    (the new wasm path, highlighted)
+    #   Python ngv_opx     — blue     (the shipped Python product)
     #   Other Python libs  — greys    (the comparison/baseline crowd)
     NGV_PYTHON = {"Python — ngv_opx (single)", "Python — ngv_opx (vectorized)"}
+    NGV_JS = set(JS_GROUP)
     NGV_RUST = {"Rust — ngv_opx (vectorized)"}
 
     color = {
-        "Python — py_vollib":              "#999999",   # grey
-        "Python — pure (math.erf)":        "#666666",   # darker grey
-        "Python — numpy/scipy":            "#333333",   # darkest grey
-        "Python — ngv_opx (single)":       "#4a90e2",   # blue
-        "Python — ngv_opx (vectorized)":   "#1f5fb5",   # darker blue
+        "Python — py_vollib":                  "#999999",   # grey
+        "Python — pure (math.erf)":            "#666666",   # darker grey
+        "Python — numpy/scipy":                "#333333",   # darkest grey
+        "Python — ngv_opx (single)":           "#4a90e2",   # blue
+        "Python — ngv_opx (vectorized)":       "#1f5fb5",   # darker blue
+        "JavaScript — @ngv/opx (single)":      "#3aa657",   # green
+        "JavaScript — @ngv/opx (vectorized)":  "#1f7a3b",   # darker green
         "Rust — ngv_opx (vectorized)":         "#7b3fb5",   # purple
     }
     dash = {n: ("dot" if n in PYTHON_GROUP else "solid") for n in ORDERED}
@@ -193,9 +218,11 @@ def render(paths) -> Path:
     # Column tints — reinforce the "NGV stands out" story.
     OTHER_BG   = "#f3f3f3"  # neutral grey for other Python libs
     NGV_PY_BG  = "#d6e6fb"  # blue for ngv_opx Python rows
+    NGV_JS_BG  = "#d6f0dc"  # green for ngv_opx wasm rows
     NGV_RS_BG  = "#e7d5f5"  # purple for ngv_opx Rust native row
     # Matching "chip" colors for the H1 label badges (light bg, dark text).
     PY_CHIP_BG,   PY_CHIP_FG = "#dcdcdc", "#222222"   # light grey chip, near-black text
+    JS_CHIP_BG,   JS_CHIP_FG = "#c8e6cf", "#1f7a3b"   # light green chip, dark green text
     RS_CHIP_BG,   RS_CHIP_FG = "#d8c4ea", "#4a1f7a"   # lavender chip, dark purple text
 
     # Stacked layout: table on top, chart below. Chart gets the lion's share
@@ -211,7 +238,12 @@ def render(paths) -> Path:
         by_n = paths[name]
         xs = sorted(by_n.keys())
         ys = [by_n[n] for n in xs]
-        lang = "Python" if name in PYTHON_GROUP else "Rust"
+        if name in PYTHON_GROUP:
+            lang = "Python"
+        elif name in JS_GROUP:
+            lang = "JavaScript"
+        else:
+            lang = "Rust"
         fig.add_trace(
             go.Scatter(
                 x=xs, y=ys, mode="lines+markers",
@@ -229,17 +261,21 @@ def render(paths) -> Path:
     # ---- Table: columns grouped by language, header shows lang/pricer split ----
     # H2 framework names (short, shown big and bold).
     pricer_label = {
-        "Python — py_vollib":              "py_vollib",
-        "Python — pure (math.erf)":        "pure (math.erf)",
-        "Python — numpy/scipy":            "numpy/scipy",
-        "Python — ngv_opx (single)":       "ngv_opx (single)",
-        "Python — ngv_opx (vectorized)":   "ngv_opx (vectorized)",
+        "Python — py_vollib":                  "py_vollib",
+        "Python — pure (math.erf)":            "pure (math.erf)",
+        "Python — numpy/scipy":                "numpy/scipy",
+        "Python — ngv_opx (single)":           "ngv_opx (single)",
+        "Python — ngv_opx (vectorized)":       "ngv_opx (vectorized)",
+        "JavaScript — @ngv/opx (single)":      "@ngv/opx (single)",
+        "JavaScript — @ngv/opx (vectorized)":  "@ngv/opx (vectorized)",
         "Rust — ngv_opx (vectorized)":         "ngv_opx (vectorized)",
     }
 
     def column_bg(name: str) -> str:
         if name in NGV_RUST:
             return NGV_RS_BG
+        if name in NGV_JS:
+            return NGV_JS_BG
         if name in NGV_PYTHON:
             return NGV_PY_BG
         return OTHER_BG
@@ -248,6 +284,8 @@ def render(paths) -> Path:
         """Return an HTML 'chip' for the H1 (language) row."""
         if name in PYTHON_GROUP:
             text, bg, fg = "PYTHON", PY_CHIP_BG, PY_CHIP_FG
+        elif name in JS_GROUP:
+            text, bg, fg = "JAVASCRIPT", JS_CHIP_BG, JS_CHIP_FG
         else:
             text, bg, fg = "RUST", RS_CHIP_BG, RS_CHIP_FG
         return (
@@ -303,6 +341,7 @@ def render(paths) -> Path:
             text=f"Black-76 pricing throughput — Python {pyver}<br>"
                  f"<sub>Highlighting the ngv_opx solution vs other libraries. "
                  f"<span style='color:#7b3fb5'>● Rust ngv_opx (native, purple)</span>"
+                 f" / <span style='color:#1f7a3b'>● JavaScript @ngv/opx (wasm, green)</span>"
                  f" / <span style='color:#1f5fb5'>● Python ngv_opx (blue)</span>"
                  f" / <span style='color:#555'>● other Python libs (greys)</span>. "
                  f"Log-log; lower is faster.</sub>",
