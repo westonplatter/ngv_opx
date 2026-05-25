@@ -2,7 +2,7 @@
 name = "ngv-opx-gpu"
 version = "0.1.0"
 edition = "2021"
-license = "MIT"
+license = "BSD-3-Clause"
 description = "wgpu/WGSL GPU backends for ngv-opx pricing and IV solving."
 
 [lib]

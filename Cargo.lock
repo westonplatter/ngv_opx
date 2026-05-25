@@ -535,6 +535,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "ngv-opx-wasm"
+version = "0.1.0"
+dependencies = [
+ "js-sys",
+ "ngv-opx-core",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "num-complex"
 version = "0.4.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"

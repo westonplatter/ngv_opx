@@ -4,10 +4,18 @@ members = [
     "crates/core",
     "crates/gpu",
     "bindings/python",
+    "bindings/wasm",
 ]
-# python binding is built via maturin (needs Python linker symbols);
-# exclude from default `cargo build`/`cargo test` to avoid bare-cargo link failures.
+# python binding builds via maturin (needs Python linker symbols);
+# wasm binding builds via wasm-pack (target wasm32-unknown-unknown).
+# Exclude both from default `cargo build`/`cargo test` to avoid host-link errors.
 default-members = [
     "crates/core",
     "crates/gpu",
 ]
+
+# Size-optimized release profile, primarily for the wasm binding.
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1

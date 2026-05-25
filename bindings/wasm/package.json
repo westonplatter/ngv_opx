@@ -1,0 +1,12 @@
+{
+  "name": "@ngv/opx",
+  "version": "0.1.0",
+  "description": "Black-76 option pricing and implied-vol solver for browsers and Node, compiled from Rust.",
+  "license": "BSD-3-Clause",
+  "private": true,
+  "scripts": {
+    "build:web": "wasm-pack build --target web --out-dir pkg-web",
+    "build:node": "wasm-pack build --target nodejs --out-dir pkg-node",
+    "build": "npm run build:web && npm run build:node"
+  }
+}

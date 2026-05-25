@@ -2,7 +2,7 @@
 name = "ngv-opx-core"
 version = "0.1.0"
 edition = "2021"
-license = "MIT"
+license = "BSD-3-Clause"
 description = "Pure-Rust option pricing core: Black-76 + Black-Scholes CPU, no FFI."
 
 [lib]

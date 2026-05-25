@@ -2,7 +2,7 @@
 name = "ngv-opx-python"
 version = "0.1.0"
 edition = "2021"
-license = "MIT"
+license = "BSD-3-Clause"
 description = "PyO3 Python bindings for ngv-opx."
 
 [lib]
