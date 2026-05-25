@@ -1,0 +1,63 @@
+name: wasm
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build wasm + Node parity tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Install Rust toolchain (with wasm32 target)
+        uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # stable
+        with:
+          toolchain: stable
+          targets: wasm32-unknown-unknown
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
+        with:
+          workspaces: . -> target
+
+      - name: Install wasm-pack (cargo)
+        run: cargo install wasm-pack --locked
+
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "20"
+
+      - name: Build wasm (target web)
+        working-directory: bindings/wasm
+        run: wasm-pack build --target web --out-dir pkg-web
+
+      - name: Build wasm (target nodejs)
+        working-directory: bindings/wasm
+        run: wasm-pack build --target nodejs --out-dir pkg-node
+
+      - name: Node parity test — Black-76 vs Python baseline
+        run: node bindings/wasm/tests/u4_black76.mjs
+
+      - name: Node parity test — IV solver vs Python baseline
+        run: node bindings/wasm/tests/u5_iv.mjs
+
+      - name: Node parity test — package shape (ESM + CJS exports)
+        run: node bindings/wasm/tests/u8_package_shape.mjs
+
+      - name: npm pack (dry run) — verify tarball contents
+        working-directory: bindings/wasm
+        run: npm pack --dry-run
