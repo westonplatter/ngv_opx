@@ -230,8 +230,8 @@ def render(paths) -> Path:
     fig = make_subplots(
         rows=2, cols=1,
         specs=[[{"type": "table"}], [{"type": "xy"}]],
-        row_heights=[0.32, 0.68],
-        vertical_spacing=0.08,
+        row_heights=[0.40, 0.60],
+        vertical_spacing=0.06,
     )
 
     for name in ORDERED:
@@ -370,25 +370,33 @@ def render(paths) -> Path:
     fig.update_yaxes(title_text="ns per option", type="log", showgrid=True, row=2, col=1)
     fig.update_layout(
         title=dict(
-            text=f"Black-76 pricing throughput — Python {pyver}<br>"
-                 f"<sub>Highlighting the ngv_opx solution vs other libraries. "
-                 f"<span style='color:#7b3fb5'>● Rust ngv_opx (native, purple)</span>"
-                 f" / <span style='color:#1f7a3b'>● JavaScript @ngv/opx (wasm, green)</span>"
-                 f" / <span style='color:#1f5fb5'>● Python ngv_opx (blue)</span>"
-                 f" / <span style='color:#555'>● other Python libs (greys)</span>. "
-                 f"Log-log; lower is faster.</sub>",
+            # Subtitle split across two lines so the color legend doesn't
+            # overflow the chart width.
+            text=(
+                f"Black-76 pricing throughput — Python {pyver}<br>"
+                f"<sub>"
+                f"<span style='color:#7b3fb5'>● Rust ngv_opx (native)</span>"
+                f" &nbsp;·&nbsp; <span style='color:#1f7a3b'>● JS @ngv/opx (wasm)</span>"
+                f" &nbsp;·&nbsp; <span style='color:#1f5fb5'>● Python ngv_opx</span>"
+                f" &nbsp;·&nbsp; <span style='color:#555'>● other Python libs</span>"
+                f"<br>Log-log; lower is faster."
+                f"</sub>"
+            ),
             x=0.5, xanchor="center",
         ),
         legend=dict(orientation="h", yanchor="top", y=-0.12, x=0.0),
         template="plotly_white",
-        height=950, width=1200,
-        margin=dict(l=70, r=30, t=110, b=80),
+        # Taller overall figure + bigger top margin to make room for the
+        # 2-line subtitle, and a taller table area (row_heights above) so
+        # the last (N=1,000,000) row isn't clipped.
+        height=1100, width=1200,
+        margin=dict(l=70, r=30, t=130, b=80),
     )
     out = Path(__file__).parent / "bench_chart.html"
     fig.write_html(out, include_plotlyjs="cdn")
     try:
         out_png = out.with_suffix(".png")
-        fig.write_image(out_png, width=1600, height=1267, scale=2)
+        fig.write_image(out_png, width=1600, height=1467, scale=2)
     except Exception as e:
         print(f"  (skipped PNG export: {e})", flush=True)
     return out
