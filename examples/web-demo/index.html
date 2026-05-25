@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ngv-opx — Black-76 IV in the browser</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --fg: #1a1a1a;
+        --bg: #fafafa;
+        --muted: #777;
+        --accent: #2c7;
+        --border: #ddd;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root { --fg: #eee; --bg: #111; --muted: #888; --border: #333; }
+      }
+      body {
+        font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+        background: var(--bg);
+        color: var(--fg);
+        margin: 0;
+        padding: 2rem;
+        max-width: 760px;
+        margin: 0 auto;
+      }
+      h1 { font-size: 1.4rem; margin-bottom: 0.25rem; }
+      .sub { color: var(--muted); font-size: 0.9rem; margin-bottom: 2rem; }
+      section { border: 1px solid var(--border); padding: 1.25rem; margin-bottom: 1.5rem; border-radius: 8px; }
+      h2 { font-size: 1rem; margin: 0 0 1rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem 1rem; }
+      label { display: flex; flex-direction: column; font-size: 0.85rem; color: var(--muted); }
+      input {
+        font: inherit; padding: 0.4rem 0.5rem; margin-top: 0.2rem;
+        background: var(--bg); color: var(--fg);
+        border: 1px solid var(--border); border-radius: 4px;
+      }
+      .result { font-size: 2rem; font-variant-numeric: tabular-nums; margin-top: 1rem; }
+      .result.sentinel { color: #c44; font-size: 1rem; }
+      button { font: inherit; padding: 0.5rem 1rem; cursor: pointer; }
+      .bench-row { display: flex; gap: 1rem; align-items: center; margin-top: 0.75rem; font-variant-numeric: tabular-nums; }
+      .bench-row .label { color: var(--muted); width: 8rem; }
+      .bench-row .val { font-weight: 600; }
+      footer { color: var(--muted); font-size: 0.8rem; margin-top: 2rem; }
+      code { font-family: ui-monospace, "SF Mono", monospace; background: rgba(127,127,127,0.15); padding: 0.1em 0.3em; border-radius: 3px; }
+    </style>
+  </head>
+  <body>
+    <h1>ngv-opx — Black-76 in the browser</h1>
+    <p class="sub">
+      Rust → WebAssembly. f64 throughout. Same numerics as the Python binding.
+      No server round-trip.
+    </p>
+
+    <section>
+      <h2>Implied volatility</h2>
+      <div class="grid">
+        <label>Forward F<input id="iv-f" type="number" value="75" step="0.01" /></label>
+        <label>Strike K<input id="iv-k" type="number" value="75" step="0.01" /></label>
+        <label>Rate r<input id="iv-r" type="number" value="0.045" step="0.001" /></label>
+        <label>Time (days)<input id="iv-d" type="number" value="30" step="1" /></label>
+        <label>Market price<input id="iv-p" type="number" value="2.99" step="0.01" /></label>
+        <label>Call?
+          <select id="iv-cp"><option value="1">Call</option><option value="0">Put</option></select>
+        </label>
+      </div>
+      <div class="result" id="iv-out">—</div>
+    </section>
+
+    <section>
+      <h2>Batch benchmark — 10,000 contracts</h2>
+      <p class="sub" style="margin-top:0">Generates a random surface and times <code>impliedVolBatch</code>.</p>
+      <button id="bench">Run benchmark</button>
+      <div class="bench-row" id="bench-out"><span class="label">Result:</span><span class="val">—</span></div>
+    </section>
+
+    <footer>
+      Loaded via <code>import { init, impliedVol } from "@ngv/opx"</code>.
+      Source: <code>examples/web-demo/</code>.
+    </footer>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
