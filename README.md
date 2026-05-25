@@ -61,7 +61,7 @@ task example          # run the worked CL Black-76 example
 | `task test:py`        | Python pytest suite (cross-validates Black-76 vs py_vollib)                 |
 | `task test:js`        | JS/wasm parity tests vs Python baseline (builds `pkg-node` via `wasm-pack`) |
 | `task bench`          | CPU benchmark — {Python, Rust} × {single, vectorized} + py_vollib           |
-| `task bench:all-pythons` | Run bench against Python 3.9, 3.10, 3.11, 3.12, 3.13 (writes JSON per version) |
+| `task bench:all-pythons` | Run bench against Python versions (writes JSON per version) |
 | `task bench:compare`  | Cross-version comparison tables + Plotly chart (reads `benchmarks/results/`) |
 | `task bench:chart`    | Plotly chart of the 5 pricing paths (writes `benchmarks/bench_chart.{html,png}`) |
 | `task bench:readme`   | Run benchmarks, regenerate `bench_chart.{html,png}`, and update README table |
