@@ -1,3 +1,5 @@
+experiments/c_black76/src/
+
 # Rust
 /target/
 **/*.rs.bk

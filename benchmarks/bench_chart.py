@@ -99,6 +99,8 @@ def collect():
         "Python — numpy/scipy":            {},
         "Python — ngv_opx (single)":       {},
         "Python — ngv_opx (vectorized)":   {},
+        "JavaScript — @ngv/opx (single)":     {},
+        "JavaScript — @ngv/opx (vectorized)": {},
         "Rust — ngv_opx (vectorized)":         {},
     }
     for n in SIZES:
@@ -146,6 +148,23 @@ def collect():
     native = json.loads(proc.stdout.strip().splitlines()[-1])
     for n_str, ns in native.items():
         paths["Rust — ngv_opx (vectorized)"][int(n_str)] = float(ns)
+
+    # JavaScript (wasm): same pattern — subprocess Node, parse the last JSON line.
+    # Requires `node` on PATH and bindings/wasm/pkg-node/ already built.
+    print("  running JavaScript (wasm) benchmark via node...", flush=True)
+    try:
+        js_proc = subprocess.run(
+            ["node", str(repo_root / "benchmarks" / "bench_wasm.mjs")],
+            cwd=repo_root, capture_output=True, text=True, check=True,
+        )
+        js = json.loads(js_proc.stdout.strip().splitlines()[-1])
+        for n_str, ns in js["js-single"].items():
+            paths["JavaScript — @ngv/opx (single)"][int(n_str)] = float(ns)
+        for n_str, ns in js["js-vec"].items():
+            paths["JavaScript — @ngv/opx (vectorized)"][int(n_str)] = float(ns)
+    except (subprocess.CalledProcessError, FileNotFoundError) as e:
+        print(f"  warning: skipping JS rows — {type(e).__name__}: {e}", flush=True)
+
     return paths
 
 
@@ -158,9 +177,7 @@ def _fmt_ns(x):
 
 
 def render(paths) -> Path:
-    # Two axes, period:
-    #   Language: Python or Rust (where the option math actually runs)
-    #   Pricer:   py_vollib | pure | numpy/scipy | ngv_opx
+    # Three language axes now: Python, JavaScript (wasm), Rust (native).
     PYTHON_GROUP = [
         "Python — pure (math.erf)",
         "Python — numpy/scipy",
@@ -168,24 +185,32 @@ def render(paths) -> Path:
         "Python — ngv_opx (single)",
         "Python — ngv_opx (vectorized)",
     ]
+    JS_GROUP = [
+        "JavaScript — @ngv/opx (single)",
+        "JavaScript — @ngv/opx (vectorized)",
+    ]
     RUST_GROUP = [
         "Rust — ngv_opx (vectorized)",
     ]
-    ORDERED = PYTHON_GROUP + RUST_GROUP
+    ORDERED = PYTHON_GROUP + JS_GROUP + RUST_GROUP
 
     # Visual differentiation: NGV solution stands out, other libs are muted.
     #   Rust ngv_opx       — purple   (the floor / fastest, highlighted)
-    #   Python ngv_opx     — blue     (the shipped product)
+    #   JavaScript ngv_opx — green    (the new wasm path, highlighted)
+    #   Python ngv_opx     — blue     (the shipped Python product)
     #   Other Python libs  — greys    (the comparison/baseline crowd)
     NGV_PYTHON = {"Python — ngv_opx (single)", "Python — ngv_opx (vectorized)"}
+    NGV_JS = set(JS_GROUP)
     NGV_RUST = {"Rust — ngv_opx (vectorized)"}
 
     color = {
-        "Python — py_vollib":              "#999999",   # grey
-        "Python — pure (math.erf)":        "#666666",   # darker grey
-        "Python — numpy/scipy":            "#333333",   # darkest grey
-        "Python — ngv_opx (single)":       "#4a90e2",   # blue
-        "Python — ngv_opx (vectorized)":   "#1f5fb5",   # darker blue
+        "Python — py_vollib":                  "#999999",   # grey
+        "Python — pure (math.erf)":            "#666666",   # darker grey
+        "Python — numpy/scipy":                "#333333",   # darkest grey
+        "Python — ngv_opx (single)":           "#4a90e2",   # blue
+        "Python — ngv_opx (vectorized)":       "#1f5fb5",   # darker blue
+        "JavaScript — @ngv/opx (single)":      "#3aa657",   # green
+        "JavaScript — @ngv/opx (vectorized)":  "#1f7a3b",   # darker green
         "Rust — ngv_opx (vectorized)":         "#7b3fb5",   # purple
     }
     dash = {n: ("dot" if n in PYTHON_GROUP else "solid") for n in ORDERED}
@@ -193,9 +218,11 @@ def render(paths) -> Path:
     # Column tints — reinforce the "NGV stands out" story.
     OTHER_BG   = "#f3f3f3"  # neutral grey for other Python libs
     NGV_PY_BG  = "#d6e6fb"  # blue for ngv_opx Python rows
+    NGV_JS_BG  = "#d6f0dc"  # green for ngv_opx wasm rows
     NGV_RS_BG  = "#e7d5f5"  # purple for ngv_opx Rust native row
     # Matching "chip" colors for the H1 label badges (light bg, dark text).
     PY_CHIP_BG,   PY_CHIP_FG = "#dcdcdc", "#222222"   # light grey chip, near-black text
+    JS_CHIP_BG,   JS_CHIP_FG = "#c8e6cf", "#1f7a3b"   # light green chip, dark green text
     RS_CHIP_BG,   RS_CHIP_FG = "#d8c4ea", "#4a1f7a"   # lavender chip, dark purple text
 
     # Stacked layout: table on top, chart below. Chart gets the lion's share
@@ -203,15 +230,24 @@ def render(paths) -> Path:
     fig = make_subplots(
         rows=2, cols=1,
         specs=[[{"type": "table"}], [{"type": "xy"}]],
-        row_heights=[0.32, 0.68],
-        vertical_spacing=0.08,
+        row_heights=[0.40, 0.60],
+        vertical_spacing=0.005,
+        # Empty title above the table; "Log-log; lower is faster" rendered
+        # as the chart's own header. Keeps the chart's reading convention
+        # near the axes that it describes.
+        subplot_titles=("", "Log-log; lower is faster"),
     )
 
     for name in ORDERED:
         by_n = paths[name]
         xs = sorted(by_n.keys())
         ys = [by_n[n] for n in xs]
-        lang = "Python" if name in PYTHON_GROUP else "Rust"
+        if name in PYTHON_GROUP:
+            lang = "Python"
+        elif name in JS_GROUP:
+            lang = "JavaScript"
+        else:
+            lang = "Rust"
         fig.add_trace(
             go.Scatter(
                 x=xs, y=ys, mode="lines+markers",
@@ -226,20 +262,40 @@ def render(paths) -> Path:
             row=2, col=1,
         )
 
-    # ---- Table: columns grouped by language, header shows lang/pricer split ----
-    # H2 framework names (short, shown big and bold).
-    pricer_label = {
-        "Python — py_vollib":              "py_vollib",
-        "Python — pure (math.erf)":        "pure (math.erf)",
-        "Python — numpy/scipy":            "numpy/scipy",
-        "Python — ngv_opx (single)":       "ngv_opx (single)",
-        "Python — ngv_opx (vectorized)":   "ngv_opx (vectorized)",
-        "Rust — ngv_opx (vectorized)":         "ngv_opx (vectorized)",
+    # ---- Table: 3-line stacked header per column ----
+    # Each header cell renders:
+    #   Row 1: LANGUAGE chip (PYTHON / JAVASCRIPT / RUST)
+    #   Row 2: library name  (py_vollib, ngv_opx, @ngv/opx, math.erf, numpy/scipy)
+    #   Row 3: variant       (single / vectorized / —)
+    # Cells stack vertically inside one Plotly header row, so column widths
+    # can shrink and the eye groups by language first, then library, then
+    # call shape.
+    library_label = {
+        "Python — py_vollib":                  "py_vollib",
+        "Python — pure (math.erf)":            "math.erf",
+        "Python — numpy/scipy":                "numpy/scipy",
+        "Python — ngv_opx (single)":           "ngv_opx",
+        "Python — ngv_opx (vectorized)":       "ngv_opx",
+        "JavaScript — @ngv/opx (single)":      "@ngv/opx",
+        "JavaScript — @ngv/opx (vectorized)":  "@ngv/opx",
+        "Rust — ngv_opx (vectorized)":         "ngv_opx",
+    }
+    variant_label = {
+        "Python — py_vollib":                  "single",
+        "Python — pure (math.erf)":            "single",
+        "Python — numpy/scipy":                "vectorized",
+        "Python — ngv_opx (single)":           "single",
+        "Python — ngv_opx (vectorized)":       "vectorized",
+        "JavaScript — @ngv/opx (single)":      "single",
+        "JavaScript — @ngv/opx (vectorized)":  "vectorized",
+        "Rust — ngv_opx (vectorized)":         "vectorized",
     }
 
     def column_bg(name: str) -> str:
         if name in NGV_RUST:
             return NGV_RS_BG
+        if name in NGV_JS:
+            return NGV_JS_BG
         if name in NGV_PYTHON:
             return NGV_PY_BG
         return OTHER_BG
@@ -248,21 +304,38 @@ def render(paths) -> Path:
         """Return an HTML 'chip' for the H1 (language) row."""
         if name in PYTHON_GROUP:
             text, bg, fg = "PYTHON", PY_CHIP_BG, PY_CHIP_FG
+        elif name in JS_GROUP:
+            text, bg, fg = "JAVASCRIPT", JS_CHIP_BG, JS_CHIP_FG
         else:
             text, bg, fg = "RUST", RS_CHIP_BG, RS_CHIP_FG
         return (
-            f"<span style='background:{bg};color:{fg};font-size:10px;"
+            f"<span style='background:{bg};color:{fg};font-size:11px;"
             f"font-weight:700;padding:2px 8px;border-radius:3px;"
             f"letter-spacing:1px;'>{text}</span>"
         )
 
     all_ns = sorted({n for by_n in paths.values() for n in by_n.keys()})
 
-    # Single header row, but it stacks H1 (chip) on top of H2 (framework).
-    header_vals = ["<b>N</b>"] + [
-        f"{h1_chip(name)}<br><b style='font-size:12px'>{pricer_label[name]}</b>"
-        for name in ORDERED
-    ]
+    def stacked_header(name: str) -> str:
+        """Build the 3-line stacked cell: language chip / library / variant."""
+        chip = h1_chip(name)
+        lib = library_label[name]
+        var = variant_label[name]
+        # Tinted strip behind the library name reinforces the column's
+        # language group. The variant row is plain so it reads as a sub-axis.
+        bg = column_bg(name)
+        return (
+            f"{chip}<br>"
+            f"<span style='background:{bg};display:inline-block;"
+            f"padding:1px 8px;border-radius:3px;'>"
+            f"<b style='font-size:14px'>{lib}</b></span><br>"
+            f"<span style='font-size:12px;color:#555;font-style:italic'>{var}</span>"
+        )
+
+    header_vals = [
+        "<b style='font-size:14px'>N</b><br>"
+        "<span style='font-size:11px;color:#888'>(batch size)</span>"
+    ] + [stacked_header(name) for name in ORDERED]
     header_bg = ["#ececec"] + [column_bg(name) for name in ORDERED]
 
     col_n = [f"{n:,}" for n in all_ns]
@@ -280,17 +353,19 @@ def render(paths) -> Path:
                 values=header_vals,
                 fill_color=header_bg,
                 align="center",
-                font=dict(size=12),
-                height=52,
+                font=dict(size=14),
+                height=96,  # 3 stacked lines + padding, slightly taller for bigger text
             ),
             cells=dict(
                 values=col_values,
                 fill_color=cell_fill,
                 align="right",
-                font=dict(family="monospace", size=11),
-                height=22,
+                font=dict(family="monospace", size=14),
+                height=28,
             ),
-            columnwidth=[55] + [160] * len(ORDERED),
+            # Narrower columns now that the stacked-header text is more compact;
+            # N column shrinks since the values are short (10 ... 1,000,000).
+            columnwidth=[40] + [80] * len(ORDERED),
         ),
         row=1, col=1,
     )
@@ -300,24 +375,34 @@ def render(paths) -> Path:
     fig.update_yaxes(title_text="ns per option", type="log", showgrid=True, row=2, col=1)
     fig.update_layout(
         title=dict(
-            text=f"Black-76 pricing throughput — Python {pyver}<br>"
-                 f"<sub>Highlighting the ngv_opx solution vs other libraries. "
-                 f"<span style='color:#7b3fb5'>● Rust ngv_opx (native, purple)</span>"
-                 f" / <span style='color:#1f5fb5'>● Python ngv_opx (blue)</span>"
-                 f" / <span style='color:#555'>● other Python libs (greys)</span>. "
-                 f"Log-log; lower is faster.</sub>",
+            # Subtitle split across two lines so the color legend doesn't
+            # overflow the chart width.
+            text=(
+                f"Black-76 pricing throughput — Python {pyver}<br>"
+                f"<sub>"
+                # Legend order matches the table column order: other libs,
+                # Python ngv_opx, JS @ngv/opx, Rust native.
+                f"<span style='color:#555'>● other Python libs</span>"
+                f" &nbsp;·&nbsp; <span style='color:#1f5fb5'>● Python ngv_opx</span>"
+                f" &nbsp;·&nbsp; <span style='color:#1f7a3b'>● JS @ngv/opx (wasm)</span>"
+                f" &nbsp;·&nbsp; <span style='color:#7b3fb5'>● Rust ngv_opx (native)</span>"
+                f"</sub>"
+            ),
             x=0.5, xanchor="center",
         ),
         legend=dict(orientation="h", yanchor="top", y=-0.12, x=0.0),
         template="plotly_white",
-        height=950, width=1200,
-        margin=dict(l=70, r=30, t=110, b=80),
+        # Taller overall figure + bigger top margin to make room for the
+        # 2-line subtitle, and a taller table area (row_heights above) so
+        # the last (N=1,000,000) row isn't clipped.
+        height=1100, width=1200,
+        margin=dict(l=70, r=30, t=130, b=80),
     )
     out = Path(__file__).parent / "bench_chart.html"
     fig.write_html(out, include_plotlyjs="cdn")
     try:
         out_png = out.with_suffix(".png")
-        fig.write_image(out_png, width=1600, height=1267, scale=2)
+        fig.write_image(out_png, width=1600, height=1467, scale=2)
     except Exception as e:
         print(f"  (skipped PNG export: {e})", flush=True)
     return out

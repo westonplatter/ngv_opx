@@ -1,26 +1,21 @@
-[package]
-name = "ngv_opx"
-version = "0.1.0"
-edition = "2021"
+[workspace]
+resolver = "2"
+members = [
+    "crates/core",
+    "crates/gpu",
+    "bindings/python",
+    "bindings/wasm",
+]
+# python binding builds via maturin (needs Python linker symbols);
+# wasm binding builds via wasm-pack (target wasm32-unknown-unknown).
+# Exclude both from default `cargo build`/`cargo test` to avoid host-link errors.
+default-members = [
+    "crates/core",
+    "crates/gpu",
+]
 
-[lib]
-name = "ngv_opx"
-crate-type = ["cdylib", "rlib"]
-
-[[bin]]
-name = "ngv_opx"
-path = "src/main.rs"
-
-[dependencies]
-wgpu = "23"
-pollster = "0.4"
-bytemuck = { version = "1.14", features = ["derive"] }
-libm = "0.2"
-
-# Python bindings (optional)
-pyo3 = { version = "0.22", features = ["extension-module"], optional = true }
-numpy = { version = "0.22", optional = true }
-
-[features]
-default = []
-python = ["pyo3", "numpy"]
+# Size-optimized release profile, primarily for the wasm binding.
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1

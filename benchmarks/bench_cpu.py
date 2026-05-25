@@ -38,11 +38,39 @@ from py_vollib.black import black as vollib_black
 
 import ngv_opx
 
-COLS = ["py-single", "py-vec", "rs-single", "rs-vec", "vollib"]
+COLS = ["py-single", "py-vec", "rs-single", "rs-vec", "vollib", "js-single", "js-vec"]
 
 RATE = 0.045
 SIZES = [10, 100, 1_000, 10_000, 100_000, 1_000_000]
 SQRT2 = math.sqrt(2.0)
+
+# Filled once at startup by _collect_js_timings(); maps N -> {"js-single": s,
+# "js-vec": s} in seconds-per-batch (already converted from ns/option).
+_JS_TIMINGS: dict[int, dict[str, float]] = {}
+
+
+def _collect_js_timings() -> None:
+    """Subprocess `node benchmarks/bench_wasm.mjs`, parse its JSON, and
+    populate `_JS_TIMINGS`. The JS bench emits ns/option per (path, N); we
+    convert to seconds-per-batch so it slots into the same data model as the
+    Python/Rust paths timed inline in this module."""
+    import subprocess
+    repo_root = Path(__file__).resolve().parent.parent
+    script = repo_root / "benchmarks" / "bench_wasm.mjs"
+    try:
+        proc = subprocess.run(
+            ["node", str(script)],
+            capture_output=True, text=True, check=True,
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError) as e:
+        print(f"warning: skipping JS columns — {type(e).__name__}: {e}", file=sys.stderr)
+        return
+    raw = json.loads(proc.stdout.strip().splitlines()[-1])
+    for n in SIZES:
+        _JS_TIMINGS[n] = {
+            "js-single": raw["js-single"][str(n)] * n / 1e9,
+            "js-vec":    raw["js-vec"][str(n)] * n / 1e9,
+        }
 
 
 # ----------------------------------------------------------------------------
@@ -135,6 +163,8 @@ def _measure_row(n: int) -> dict:
         "rs-single": best_of(rs_single, rep_rs_single),
         "rs-vec":    best_of(rs_vec, rep_fast),
         "vollib":    best_of(vollib_single, rep_slow),
+        "js-single": _JS_TIMINGS.get(n, {}).get("js-single", float("nan")),
+        "js-vec":    _JS_TIMINGS.get(n, {}).get("js-vec",    float("nan")),
     }
 
     # Correctness sanity at the smallest size.
@@ -164,6 +194,11 @@ def _fmt_per(seconds: float, n: int) -> str:
 def run_bench(save_path: Path | None = None):
     pyver = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
     print(f"\nBlack-76 PRICE — Python {pyver}   (best-of-N wall-clock)")
+
+    # JS columns are produced by a separate Node subprocess. Run it once
+    # before the inline Python/Rust grid so every row has the data ready.
+    print("collecting JS (wasm) timings via node...", flush=True)
+    _collect_js_timings()
 
     # Collect raw timings (seconds) into a DataFrame indexed by N.
     raw = pd.DataFrame(
@@ -203,7 +238,11 @@ def run_bench(save_path: Path | None = None):
                 and not math.isnan(raw.at[n, "py-single"]))
     base = raw.at[n_ref, "vollib"]
     speedups = pd.Series(
-        {col: base / raw.at[n_ref, col] for col in COLS if col != "vollib"},
+        {
+            col: base / raw.at[n_ref, col]
+            for col in COLS
+            if col != "vollib" and not math.isnan(raw.at[n_ref, col])
+        },
         name=f"×vs py_vollib @ N={n_ref:,}",
     ).map(lambda x: f"{x:.1f}x")
     print(f"\n— speedups vs py_vollib at N={n_ref:,} (what migrating gets you) —")
