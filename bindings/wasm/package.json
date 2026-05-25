@@ -1,12 +1,38 @@
 {
   "name": "@ngv/opx",
   "version": "0.1.0",
-  "description": "Black-76 option pricing and implied-vol solver for browsers and Node, compiled from Rust.",
+  "description": "Black-76 option pricing and implied-vol solver for browsers and Node, compiled from Rust to WebAssembly.",
   "license": "BSD-3-Clause",
-  "private": true,
+  "type": "module",
+  "main": "./index-node.cjs",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "browser": "./index-web.js",
+      "import": "./index-node.mjs",
+      "require": "./index-node.cjs",
+      "default": "./index-node.mjs"
+    }
+  },
+  "files": [
+    "index-node.cjs",
+    "index-node.mjs",
+    "index-web.js",
+    "index.d.ts",
+    "pkg-web/ngv_opx_wasm_bg.wasm",
+    "pkg-web/ngv_opx_wasm.js",
+    "pkg-web/ngv_opx_wasm.d.ts",
+    "pkg-node/ngv_opx_wasm_bg.wasm",
+    "pkg-node/ngv_opx_wasm.js",
+    "pkg-node/ngv_opx_wasm.d.ts",
+    "LICENSE",
+    "README.md"
+  ],
   "scripts": {
     "build:web": "wasm-pack build --target web --out-dir pkg-web",
     "build:node": "wasm-pack build --target nodejs --out-dir pkg-node",
-    "build": "npm run build:web && npm run build:node"
+    "build": "npm run build:web && npm run build:node",
+    "test": "node tests/u4_black76.mjs && node tests/u5_iv.mjs && node tests/u8_package_shape.mjs"
   }
 }
