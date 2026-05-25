@@ -231,7 +231,11 @@ def render(paths) -> Path:
         rows=2, cols=1,
         specs=[[{"type": "table"}], [{"type": "xy"}]],
         row_heights=[0.40, 0.60],
-        vertical_spacing=0.06,
+        vertical_spacing=0.005,
+        # Empty title above the table; "Log-log; lower is faster" rendered
+        # as the chart's own header. Keeps the chart's reading convention
+        # near the axes that it describes.
+        subplot_titles=("", "Log-log; lower is faster"),
     )
 
     for name in ORDERED:
@@ -375,11 +379,12 @@ def render(paths) -> Path:
             text=(
                 f"Black-76 pricing throughput — Python {pyver}<br>"
                 f"<sub>"
-                f"<span style='color:#7b3fb5'>● Rust ngv_opx (native)</span>"
-                f" &nbsp;·&nbsp; <span style='color:#1f7a3b'>● JS @ngv/opx (wasm)</span>"
+                # Legend order matches the table column order: other libs,
+                # Python ngv_opx, JS @ngv/opx, Rust native.
+                f"<span style='color:#555'>● other Python libs</span>"
                 f" &nbsp;·&nbsp; <span style='color:#1f5fb5'>● Python ngv_opx</span>"
-                f" &nbsp;·&nbsp; <span style='color:#555'>● other Python libs</span>"
-                f"<br>Log-log; lower is faster."
+                f" &nbsp;·&nbsp; <span style='color:#1f7a3b'>● JS @ngv/opx (wasm)</span>"
+                f" &nbsp;·&nbsp; <span style='color:#7b3fb5'>● Rust ngv_opx (native)</span>"
                 f"</sub>"
             ),
             x=0.5, xanchor="center",
