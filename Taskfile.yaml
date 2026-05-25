@@ -29,30 +29,41 @@ tasks:
     dir: bindings/python
     cmd: uv run pytest tests/
 
+  # Bench/example tasks run from bindings/python so they pick up the venv where
+  # `task build` installed the extension. The bench scripts themselves live at
+  # the workspace-root benchmarks/ dir and resolve their own paths via
+  # Path(__file__), so the relative invocation works regardless of CWD.
+
   bench:
     desc: CPU benchmark — {Python, Rust} x {single, vectorized} + py_vollib
     deps: [build]
-    cmd: uv run python benchmarks/bench_cpu.py
+    dir: bindings/python
+    cmd: uv run python ../../benchmarks/bench_cpu.py
 
   bench:chart:
     desc: Plotly chart of the 5 pricing paths (writes benchmarks/bench_chart.{html,png})
     deps: [build]
-    cmd: uv run python benchmarks/bench_chart.py
+    dir: bindings/python
+    cmd: uv run python ../../benchmarks/bench_chart.py
 
   bench:readme:
     desc: Run benchmarks, regenerate bench_chart.{html,png}, and update README table
     deps: [build]
-    cmd: uv run python benchmarks/update_readme.py
+    dir: bindings/python
+    cmd: uv run python ../../benchmarks/update_readme.py
 
   bench:all-pythons:
     desc: Run bench against Python 3.11, 3.12, 3.13 — saves JSON per version under benchmarks/results/
-    cmd: bash benchmarks/bench_all_pythons.sh
+    dir: bindings/python
+    cmd: bash ../../benchmarks/bench_all_pythons.sh
 
   bench:compare:
     desc: Cross-version comparison tables + Plotly chart (reads benchmarks/results/*.json)
-    cmd: uv run python benchmarks/bench_compare.py
+    dir: bindings/python
+    cmd: uv run python ../../benchmarks/bench_compare.py
 
   example:
     desc: Run the Black-76 IV roundtrip example on the crude oil surface
     deps: [build]
-    cmd: uv run python example.py
+    dir: bindings/python
+    cmd: uv run python examples/example.py
