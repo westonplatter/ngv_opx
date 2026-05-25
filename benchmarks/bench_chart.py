@@ -309,7 +309,7 @@ def render(paths) -> Path:
         else:
             text, bg, fg = "RUST", RS_CHIP_BG, RS_CHIP_FG
         return (
-            f"<span style='background:{bg};color:{fg};font-size:10px;"
+            f"<span style='background:{bg};color:{fg};font-size:11px;"
             f"font-weight:700;padding:2px 8px;border-radius:3px;"
             f"letter-spacing:1px;'>{text}</span>"
         )
@@ -328,12 +328,13 @@ def render(paths) -> Path:
             f"{chip}<br>"
             f"<span style='background:{bg};display:inline-block;"
             f"padding:1px 8px;border-radius:3px;'>"
-            f"<b style='font-size:12px'>{lib}</b></span><br>"
-            f"<span style='font-size:10.5px;color:#555;font-style:italic'>{var}</span>"
+            f"<b style='font-size:14px'>{lib}</b></span><br>"
+            f"<span style='font-size:12px;color:#555;font-style:italic'>{var}</span>"
         )
 
     header_vals = [
-        "<b>N</b><br><span style='font-size:10px;color:#888'>(batch size)</span>"
+        "<b style='font-size:14px'>N</b><br>"
+        "<span style='font-size:11px;color:#888'>(batch size)</span>"
     ] + [stacked_header(name) for name in ORDERED]
     header_bg = ["#ececec"] + [column_bg(name) for name in ORDERED]
 
@@ -352,19 +353,19 @@ def render(paths) -> Path:
                 values=header_vals,
                 fill_color=header_bg,
                 align="center",
-                font=dict(size=12),
-                height=82,  # 3 stacked lines + padding
+                font=dict(size=14),
+                height=96,  # 3 stacked lines + padding, slightly taller for bigger text
             ),
             cells=dict(
                 values=col_values,
                 fill_color=cell_fill,
                 align="right",
-                font=dict(family="monospace", size=11),
-                height=22,
+                font=dict(family="monospace", size=14),
+                height=28,
             ),
-            # Each column can now be narrower since the stacked header
-            # carries less text per line.
-            columnwidth=[60] + [110] * len(ORDERED),
+            # Narrower columns now that the stacked-header text is more compact;
+            # N column shrinks since the values are short (10 ... 1,000,000).
+            columnwidth=[40] + [80] * len(ORDERED),
         ),
         row=1, col=1,
     )
