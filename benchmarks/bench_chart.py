@@ -258,17 +258,33 @@ def render(paths) -> Path:
             row=2, col=1,
         )
 
-    # ---- Table: columns grouped by language, header shows lang/pricer split ----
-    # H2 framework names (short, shown big and bold).
-    pricer_label = {
+    # ---- Table: 3-line stacked header per column ----
+    # Each header cell renders:
+    #   Row 1: LANGUAGE chip (PYTHON / JAVASCRIPT / RUST)
+    #   Row 2: library name  (py_vollib, ngv_opx, @ngv/opx, math.erf, numpy/scipy)
+    #   Row 3: variant       (single / vectorized / —)
+    # Cells stack vertically inside one Plotly header row, so column widths
+    # can shrink and the eye groups by language first, then library, then
+    # call shape.
+    library_label = {
         "Python — py_vollib":                  "py_vollib",
-        "Python — pure (math.erf)":            "pure (math.erf)",
+        "Python — pure (math.erf)":            "math.erf",
         "Python — numpy/scipy":                "numpy/scipy",
-        "Python — ngv_opx (single)":           "ngv_opx (single)",
-        "Python — ngv_opx (vectorized)":       "ngv_opx (vectorized)",
-        "JavaScript — @ngv/opx (single)":      "@ngv/opx (single)",
-        "JavaScript — @ngv/opx (vectorized)":  "@ngv/opx (vectorized)",
-        "Rust — ngv_opx (vectorized)":         "ngv_opx (vectorized)",
+        "Python — ngv_opx (single)":           "ngv_opx",
+        "Python — ngv_opx (vectorized)":       "ngv_opx",
+        "JavaScript — @ngv/opx (single)":      "@ngv/opx",
+        "JavaScript — @ngv/opx (vectorized)":  "@ngv/opx",
+        "Rust — ngv_opx (vectorized)":         "ngv_opx",
+    }
+    variant_label = {
+        "Python — py_vollib":                  "single",
+        "Python — pure (math.erf)":            "single",
+        "Python — numpy/scipy":                "vectorized",
+        "Python — ngv_opx (single)":           "single",
+        "Python — ngv_opx (vectorized)":       "vectorized",
+        "JavaScript — @ngv/opx (single)":      "single",
+        "JavaScript — @ngv/opx (vectorized)":  "vectorized",
+        "Rust — ngv_opx (vectorized)":         "vectorized",
     }
 
     def column_bg(name: str) -> str:
@@ -296,11 +312,25 @@ def render(paths) -> Path:
 
     all_ns = sorted({n for by_n in paths.values() for n in by_n.keys()})
 
-    # Single header row, but it stacks H1 (chip) on top of H2 (framework).
-    header_vals = ["<b>N</b>"] + [
-        f"{h1_chip(name)}<br><b style='font-size:12px'>{pricer_label[name]}</b>"
-        for name in ORDERED
-    ]
+    def stacked_header(name: str) -> str:
+        """Build the 3-line stacked cell: language chip / library / variant."""
+        chip = h1_chip(name)
+        lib = library_label[name]
+        var = variant_label[name]
+        # Tinted strip behind the library name reinforces the column's
+        # language group. The variant row is plain so it reads as a sub-axis.
+        bg = column_bg(name)
+        return (
+            f"{chip}<br>"
+            f"<span style='background:{bg};display:inline-block;"
+            f"padding:1px 8px;border-radius:3px;'>"
+            f"<b style='font-size:12px'>{lib}</b></span><br>"
+            f"<span style='font-size:10.5px;color:#555;font-style:italic'>{var}</span>"
+        )
+
+    header_vals = [
+        "<b>N</b><br><span style='font-size:10px;color:#888'>(batch size)</span>"
+    ] + [stacked_header(name) for name in ORDERED]
     header_bg = ["#ececec"] + [column_bg(name) for name in ORDERED]
 
     col_n = [f"{n:,}" for n in all_ns]
@@ -319,7 +349,7 @@ def render(paths) -> Path:
                 fill_color=header_bg,
                 align="center",
                 font=dict(size=12),
-                height=52,
+                height=82,  # 3 stacked lines + padding
             ),
             cells=dict(
                 values=col_values,
@@ -328,7 +358,9 @@ def render(paths) -> Path:
                 font=dict(family="monospace", size=11),
                 height=22,
             ),
-            columnwidth=[55] + [160] * len(ORDERED),
+            # Each column can now be narrower since the stacked header
+            # carries less text per line.
+            columnwidth=[60] + [110] * len(ORDERED),
         ),
         row=1, col=1,
     )
