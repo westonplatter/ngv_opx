@@ -54,11 +54,12 @@ task example          # run the worked CL Black-76 example
 
 | Task                  | Description                                                                 |
 |-----------------------|-----------------------------------------------------------------------------|
-| `task build`          | Build the Rust extension into the current uv venv (release mode)            |
+| `task build`          | Build the Rust extension into the `bindings/python` uv venv (release mode)  |
 | `task example`        | Run the Black-76 IV roundtrip example on the crude oil surface              |
-| `task test`           | Run Rust unit tests **and** Python pytest suite                             |
-| `task test:rust`      | Rust unit tests only                                                        |
-| `task test:py`        | Python pytest suite only (cross-validates Black-76 vs py_vollib)            |
+| `task test`           | Run Rust workspace tests **+** Python pytest **+** JS/wasm parity tests     |
+| `task test:rust`      | Rust workspace unit tests (core + gpu)                                      |
+| `task test:py`        | Python pytest suite (cross-validates Black-76 vs py_vollib)                 |
+| `task test:js`        | JS/wasm parity tests vs Python baseline (builds `pkg-node` via `wasm-pack`) |
 | `task bench`          | CPU benchmark — {Python, Rust} × {single, vectorized} + py_vollib           |
 | `task bench:all-pythons` | Run bench against Python 3.9, 3.10, 3.11, 3.12, 3.13 (writes JSON per version) |
 | `task bench:compare`  | Cross-version comparison tables + Plotly chart (reads `benchmarks/results/`) |
