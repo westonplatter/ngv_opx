@@ -14,8 +14,16 @@ default-members = [
     "crates/gpu",
 ]
 
-# Size-optimized release profile, primarily for the wasm binding.
-[profile.release]
+# Size-optimized release profile, scoped to the wasm binding only. The
+# workspace's other crates (core, gpu) keep cargo's default release profile
+# so `cargo run --release --example bench_native` reflects realistic native
+# perf, not size-optimized codegen.
+[profile.release.package.ngv-opx-wasm]
 opt-level = "z"
-lto = true
 codegen-units = 1
+
+# LTO is a profile-level (not package-level) knob in Cargo. Keep it on for
+# the whole release profile — it costs link time but the wasm binary needs
+# it for size, and the native crates benefit from it too.
+[profile.release]
+lto = true

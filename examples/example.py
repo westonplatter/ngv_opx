@@ -2,7 +2,8 @@
 plus the 0-DTE / sub-day edge cases mirrored from the test suite.
 
 Generates prices from known vols, then asks the Rust solver to recover them.
-Run: `uv run maturin develop --release && uv run python examples/example.py`
+Run from repo root: `task example`
+(or directly: `cd bindings/python && uv run python ../../examples/example.py`)
 """
 import math
 import numpy as np

@@ -66,4 +66,4 @@ tasks:
     desc: Run the Black-76 IV roundtrip example on the crude oil surface
     deps: [build]
     dir: bindings/python
-    cmd: uv run python examples/example.py
+    cmd: uv run python ../../examples/example.py

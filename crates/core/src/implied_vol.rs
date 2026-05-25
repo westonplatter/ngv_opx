@@ -1,3 +1,13 @@
+//! **f32 CPU reference for the GPU IV shader — NOT the production solver.**
+//!
+//! This module mirrors `iv_shader.wgsl` numerically so the GPU path has an
+//! apples-to-apples CPU cross-check. It uses f32, a hand-rolled Abramowitz
+//! erf, and a Black-Scholes (not Black-76) formulation — none of which match
+//! what production callers want.
+//!
+//! Bindings must use [`crate::black76`] (`black76_implied_vol_f64`), which
+//! is f64 and matches the Python/wasm parity baseline. Do not wire anything
+//! in this file into a binding.
 use bytemuck::{Pod, Zeroable};
 use std::f32::consts::{FRAC_1_SQRT_2, PI};
 
