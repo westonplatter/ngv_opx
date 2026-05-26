@@ -6,7 +6,9 @@
 //! 5% seed to reach noise floor. See `iv/householder.rs` and `todo.md` Issue 3
 //! for the full story. Quartic Householder stays on the table as future work.)
 //!
-//! Public entry: [`black76_implied_vol`].
+//! Public entries:
+//! - [`black76_implied_vol`]              — SR-seeded + 3 Halley
+//! - [`black76_implied_vol_with_seed_f64`] — caller-seeded + 3 Halley (skips SR)
 //!
 //! Input validation, put-call parity conversion, and the no-arbitrage gates
 //! all live here. The SR seed and the refinement are pure math living in
@@ -16,24 +18,29 @@ use crate::iv::errors::IvError;
 use crate::iv::householder::refine;
 use crate::iv::stefanica::sr_seed_call;
 
-/// Black-76 implied volatility via SR seed + 3 fixed Halley steps.
-///
-/// All inputs in f64. Returns σ (annualized, per-year vol — i.e. v/√T).
-///
-/// # Errors
-/// - `NonPositiveTime`     — `time_years <= 0` or non-finite
-/// - `NonPositiveForward`  — `forward <= 0` or `strike <= 0`
-/// - `NonFinite`           — any other non-finite input, or the seed itself was non-finite
-/// - `BelowIntrinsic`      — `market_price` is below the discounted intrinsic
-/// - `AboveNoArbitrage`    — `market_price` is at or above the no-arb upper bound
-pub fn black76_implied_vol(
+/// Post-validation state shared by both entry points. After `prepare()` returns
+/// `Ok`, the row is known to be inside the no-arb band with resolvable time
+/// value and is normalized into the call-side Black coordinates that both SR
+/// and Halley operate on.
+struct CallContext {
+    /// log-moneyness `y = ln(F / K)`
+    y: f64,
+    /// normalized call price for the SR seed: `αC = Cm / (K · e^{-rT})`
+    alpha: f64,
+    /// normalized Black call for the Halley residual: `Cm / (e^{-rT} · √(F·K))`
+    b_market: f64,
+    /// cached `√T` for the final `σ = v / √T` conversion
+    sqrt_t: f64,
+}
+
+fn prepare(
     forward: f64,
     strike: f64,
     rate: f64,
     time_years: f64,
     market_price: f64,
     is_call: bool,
-) -> Result<f64, IvError> {
+) -> Result<CallContext, IvError> {
     if !time_years.is_finite() || time_years <= 0.0 {
         return Err(IvError::NonPositiveTime);
     }
@@ -73,17 +80,74 @@ pub fn black76_implied_vol(
         return Err(IvError::BelowIntrinsic);
     }
 
-    let y = (forward / strike).ln();
-    let alpha = call_price / (strike * discount);
-    let v_seed = sr_seed_call(y, alpha).ok_or(IvError::NonFinite)?;
+    Ok(CallContext {
+        y: (forward / strike).ln(),
+        alpha: call_price / (strike * discount),
+        b_market: call_price / (discount * (forward * strike).sqrt()),
+        sqrt_t: time_years.sqrt(),
+    })
+}
 
-    let b_market = call_price / (discount * (forward * strike).sqrt());
-    let v_final = refine(y, v_seed, b_market);
+fn finalize(ctx: &CallContext, v_seed: f64) -> Result<f64, IvError> {
+    let v_final = refine(ctx.y, v_seed, ctx.b_market);
     if !v_final.is_finite() || v_final <= 0.0 {
         return Err(IvError::NonFinite);
     }
+    Ok(v_final / ctx.sqrt_t)
+}
 
-    Ok(v_final / time_years.sqrt())
+/// Black-76 implied volatility via SR seed + 3 fixed Halley steps.
+///
+/// All inputs in f64. Returns σ (annualized, per-year vol — i.e. v/√T).
+///
+/// # Errors
+/// - `NonPositiveTime`     — `time_years <= 0` or non-finite
+/// - `NonPositiveForward`  — `forward <= 0` or `strike <= 0`
+/// - `NonFinite`           — any other non-finite input, or the seed itself was non-finite
+/// - `BelowIntrinsic`      — `market_price` is below the discounted intrinsic
+/// - `AboveNoArbitrage`    — `market_price` is at or above the no-arb upper bound
+pub fn black76_implied_vol(
+    forward: f64,
+    strike: f64,
+    rate: f64,
+    time_years: f64,
+    market_price: f64,
+    is_call: bool,
+) -> Result<f64, IvError> {
+    let ctx = prepare(forward, strike, rate, time_years, market_price, is_call)?;
+    let v_seed = sr_seed_call(ctx.y, ctx.alpha).ok_or(IvError::NonFinite)?;
+    finalize(&ctx, v_seed)
+}
+
+/// Black-76 IV with a caller-supplied σ seed instead of running the SR step.
+///
+/// Same validation, parity, and gating as [`black76_implied_vol`]. The caller's
+/// `sigma_seed` (annualized) is converted to total-vol coordinates internally
+/// (`v_seed = sigma_seed · √T`) and fed straight into the 3-step Halley
+/// refinement. Use this when an external system has already produced an
+/// approximate σ — e.g., the GPU f32 path in U5 of the project plan emits a
+/// f32 IV that we re-refine in f64 here.
+///
+/// # Errors
+/// Same variants as [`black76_implied_vol`], plus `NonFinite` when
+/// `sigma_seed` is non-positive or non-finite. Note: if the seed is far from
+/// the true σ (>5% relative), 3 Halley steps may not reach machine precision;
+/// the returned σ is still a valid, finite refinement of the seed — the caller
+/// is responsible for checking residual quality if they care.
+pub fn black76_implied_vol_with_seed_f64(
+    forward: f64,
+    strike: f64,
+    rate: f64,
+    time_years: f64,
+    market_price: f64,
+    is_call: bool,
+    sigma_seed: f64,
+) -> Result<f64, IvError> {
+    if !sigma_seed.is_finite() || sigma_seed <= 0.0 {
+        return Err(IvError::NonFinite);
+    }
+    let ctx = prepare(forward, strike, rate, time_years, market_price, is_call)?;
+    finalize(&ctx, sigma_seed * ctx.sqrt_t)
 }
 
 #[cfg(test)]

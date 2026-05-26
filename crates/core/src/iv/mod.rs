@@ -20,4 +20,4 @@ pub mod stefanica;
 
 pub use batch::{black76_implied_vol_batch, black76_implied_vol_batch_serial};
 pub use errors::IvError;
-pub use solver::black76_implied_vol;
+pub use solver::{black76_implied_vol, black76_implied_vol_with_seed_f64};

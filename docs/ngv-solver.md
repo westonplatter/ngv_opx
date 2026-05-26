@@ -477,6 +477,25 @@ The serial batch entry is provided for cases where the caller is already
 parallelizing at a higher level (per-symbol, per-tenor, etc.) and rayon's
 nested-pool overhead dominates on small inner batches.
 
+### Seeded entry (for external f32/GPU refinement)
+
+```rust
+use ngv_opx_core::iv::black76_implied_vol_with_seed_f64;
+
+let sigma: Result<f64, IvError> = black76_implied_vol_with_seed_f64(
+    forward, strike, rate, time_years, market_price, is_call,
+    sigma_seed,  // external σ guess in annualized vol-pts
+);
+```
+
+Same validation, parity, and gating as `black76_implied_vol`. Skips the SR
+seed step and feeds the caller's `sigma_seed` directly into the 3-step Halley
+refinement. The GPU path in PR 2 uses this for the f64 CPU fix-up step,
+passing the GPU's f32 IV as the seed. If the seed is far from the true σ
+(>5% relative), 3 Halley steps may not reach machine precision; the returned
+σ is still a valid finite refinement of the seed but residual quality is the
+caller's responsibility to check.
+
 ### Error variants
 
 ```rust
@@ -532,7 +551,7 @@ Run the suite:
 cargo test -p ngv-opx-core --release
 ```
 
-52 tests across 7 test files. Diagnostic stats (worst-case errors, sample
+56 tests across 8 test files. Diagnostic stats (worst-case errors, sample
 counts, skip counts) print with `-- --nocapture`.
 
 The latest observed 100k random round-trip numbers:
@@ -574,12 +593,12 @@ port.
 
 ```
 crates/core/src/iv/
-├── mod.rs            -- public re-exports (black76_implied_vol, batch, IvError)
+├── mod.rs            -- public re-exports (black76_implied_vol, _with_seed_f64, batch, IvError)
 ├── errors.rs         -- IvError enum
 ├── black.rs          -- normalized Black-76 + vega/volga/d3 + erfcx
 ├── stefanica.rs      -- SR closed-form seed (Pólya-based, eqs 16–26)
 ├── householder.rs    -- Halley refinement (3 fixed steps, file misnamed for legacy reasons)
-├── solver.rs         -- scalar entry: validate → parity → SR → refine → σ
+├── solver.rs         -- scalar entries: SR-seeded + caller-seeded, share validate/parity/finalize helpers
 └── batch.rs          -- rayon SoA batch + serial variant
 
 crates/core/tests/
@@ -588,6 +607,7 @@ crates/core/tests/
 ├── iv_parity.rs               -- put-call parity in IV space, dense grid
 ├── iv_edge_cases.rs           -- 17 bad-input tests + garbage fuzz
 ├── iv_sr_branches.rs          -- all 4 SR σ-branches + eq-24 spotlight
+├── iv_seeded.rs               -- seeded entry: SR-seed match, ±1e-3 convergence, wild-seed safety
 └── iv_third_party_xcheck.rs   -- vs existing Newton solver on 20 canonical points
 
 crates/core/examples/
