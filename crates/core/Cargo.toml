@@ -11,3 +11,4 @@ name = "ngv_opx_core"
 [dependencies]
 bytemuck = { version = "1.14", features = ["derive"] }
 libm = "0.2"
+rayon = "1.10"

@@ -1,5 +1,6 @@
 pub mod black76;
 pub mod implied_vol;
+pub mod iv;
 
 use bytemuck::{Pod, Zeroable};
 use std::f32::consts::FRAC_1_SQRT_2;
