@@ -3,8 +3,9 @@
 //! (The original plan specified Householder-3 quartic refinement with 2 steps.
 //! In implementation the plan's quartic formula was found to overshoot Newton
 //! on deep-ITM rows; we switched to Halley cubic, which needs 3 steps from a
-//! 5% seed to reach noise floor. See `iv/householder.rs` and `todo.md` Issue 3
-//! for the full story. Quartic Householder stays on the table as future work.)
+//! 5% seed to reach noise floor. See `iv/householder.rs` and
+//! `docs/ngv-solver.md` §"Why Halley instead of Householder-3" for the full
+//! story. Quartic Householder stays on the table as future work.)
 //!
 //! Public entries:
 //! - [`black76_implied_vol`]              — SR-seeded + 3 Halley

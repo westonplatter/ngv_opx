@@ -127,7 +127,7 @@ fn all_four_branches_get_exercised() {
 
 /// Hand-constructed case for the y < 0, αC ≤ C0 branch (eq 24's
 /// `-√(γ+y) + √(γ-y)` form). This is the highest-risk branch per the
-/// `todo.md` Issue 5 — a sign error here would slip through aggregate
+/// `docs/ngv-solver.md` §"SR branch selection" — a sign error here would slip through aggregate
 /// round-trip tests for a long time.
 #[test]
 fn negative_leading_sqrt_branch_recovers_sigma() {

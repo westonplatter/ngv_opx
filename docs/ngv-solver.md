@@ -620,17 +620,42 @@ file name — module path is `iv::householder` either way.
 
 ## What's deferred
 
-Five items worth doing later, ranked by value:
+Items worth doing later, ranked by value. Each is contained and shippable on
+its own; none are blocking for current callers.
 
-1. **`IvError::NoResolvableTimeValue`** variant so callers can distinguish
-   "bad market price" from "valid price, indeterminate IV at f64".
-2. **True third-party reference fixtures** from py_vollib or QuantLib
-   (currently the cross-check is against our own Newton solver).
-3. **Corrected quartic Householder** behind a future explicit feature such as
-   `quartic_householder`, as a comparison path.
-4. **Tighten random-roundtrip wing tolerance** from 1e-7 to 1e-9 (observed
-   worst is 1.74e-9; tightening locks current accuracy in as a contract).
-5. **GPU transcription** of the same SR + Halley math to WGSL.
+1. **`IvError::NoResolvableTimeValue` variant.** Distinguish "below intrinsic
+   = bad market" from "intrinsic ≤ price ≤ intrinsic + f64 noise = valid
+   market but indeterminate IV". Currently both map to `BelowIntrinsic`.
+   Quality-of-life for downstream callers; no algorithmic impact.
+2. **True third-party reference fixtures.** Currently
+   `tests/iv_third_party_xcheck.rs` cross-checks against our own Newton
+   solver as the oracle. To close the audit loop, generate ~20 reference
+   (F, K, T, r, σ, price) triples offline using py_vollib_vectorized or
+   QuantLib and commit them as static fixtures with tolerance 1e-10.
+3. **Corrected quartic Householder formula** behind an explicit
+   `quartic_householder` feature flag, as a comparison path. The plan's
+   quartic formula overshot Newton on deep-ITM rows; the standard recursive
+   derivation `x_{k+1} = x_k + n · (1/f)^(n−1) / (1/f)^(n)` for n=3 yields a
+   different numerator coefficient. Worth implementing as a back-to-back
+   benchmark vs the cubic schedule, but cubic already meets every accuracy
+   and throughput target so this is research, not a critical path item.
+4. **Tighten the random-roundtrip wing tolerance** from the current 1e-7
+   asserted bound to 1e-9 (observed worst is 1.74e-9). This is a one-line
+   test-assertion change that locks current accuracy in as a contract; any
+   regression below that level then fails CI rather than silently passing.
+5. **Per-derivative grid expansion** in `iv::black::tests`. The
+   finite-difference derivative tests use a 4-point fixture. Expanding to a
+   denser moneyness × volatility × time grid (still cheap to run) would
+   strengthen the d3 coverage in particular, since d3 is the high-derivative
+   term that ate the most algebra during the initial implementation and
+   would be load-bearing if a future quartic refinement path is wired up.
+6. **GPU transcription** of the same SR + Halley math to WGSL — the second
+   PR of this project. The seeded entry `black76_implied_vol_with_seed_f64`
+   is the f64 bridge the GPU path will use for the CPU fix-up step.
+7. **Rename `householder.rs` → `halley.rs`.** Cosmetic; module path stays
+   `iv::householder` either way. The file was named when the plan still
+   called for Householder-3 refinement; the implementation pivoted but the
+   filename didn't. Trivial to do, easy to defer.
 
 ## Summary
 

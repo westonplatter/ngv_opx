@@ -2,8 +2,9 @@
 //! refinement steps. (Plan called for Householder-3 quartic; the quartic
 //! formula as written in the plan overshoots Newton on deep-ITM rows, so we
 //! ship the well-known Halley cubic. Three steps from a 5% seed reach noise
-//! floor on the bulk grid. See `iv/householder.rs` for the details and
-//! `todo.md` Issue 3 for the rationale.)
+//! floor on the bulk grid. See `iv/householder.rs` for the implementation and
+//! `docs/ngv-solver.md` §"Why Halley instead of Householder-3" for the
+//! rationale.)
 //!
 //! See docs/plans/2026-05-25-001-feat-sr-householder-and-gpu-black76-plan.md.
 //!
