@@ -10,7 +10,7 @@ name = "ngv_opx"
 crate-type = ["cdylib"]
 
 [dependencies]
-ngv-opx-core = { path = "../../crates/core" }
-ngv-opx-gpu = { path = "../../crates/gpu" }
+ngv-opx-core = { path = "../../crates/core", version = "0.1.0" }
+ngv-opx-gpu = { path = "../../crates/gpu", version = "0.1.0" }
 pyo3 = { version = "0.22", features = ["extension-module"] }
 numpy = "0.22"

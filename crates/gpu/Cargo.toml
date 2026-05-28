@@ -9,7 +9,7 @@ description = "wgpu/WGSL GPU backends for ngv-opx pricing and IV solving."
 name = "ngv_opx_gpu"
 
 [dependencies]
-ngv-opx-core = { path = "../core" }
+ngv-opx-core = { path = "../core", version = "0.1.0" }
 wgpu = "23"
 pollster = "0.4"
 bytemuck = { version = "1.14", features = ["derive"] }

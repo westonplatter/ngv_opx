@@ -1,0 +1,225 @@
+name: publish-python
+
+# Builds pre-compiled wheels for all major platforms and publishes to PyPI.
+# Trigger: push a semver tag (e.g. v0.1.0) or run manually.
+#
+# The Rust code is compiled INTO each wheel (.so / .pyd). End users need no
+# Rust toolchain — they get a pure binary wheel from PyPI.
+#
+# Authentication: PyPI Trusted Publishing (OIDC, no token needed).
+# One-time setup at https://pypi.org/manage/account/publishing/:
+#   owner:    <your-github-org>
+#   repo:     ngv_opx
+#   workflow: publish-python.yml
+#   environment: pypi
+#
+# Platform matrix:
+#   Linux   — manylinux  x86_64 + aarch64     (glibc, covers most distros)
+#   Linux   — musllinux  x86_64 + aarch64     (Alpine / musl-libc)
+#   macOS   — x86_64 (Intel, macos-13 runner)
+#   macOS   — aarch64 (Apple Silicon, macos-latest runner)
+#   Windows — x86_64
+
+on:
+  push:
+    tags: ["v[0-9]+.[0-9]+.[0-9]+"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # ── Linux / manylinux ────────────────────────────────────────────────────
+  linux:
+    name: Linux manylinux (${{ matrix.target }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [x86_64, aarch64]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Build wheels (manylinux)
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          manylinux: auto
+          # --find-interpreter: maturin discovers all CPython interpreters in
+          # the manylinux container (cp39–cp313) and builds one wheel per version.
+          args: --release --out dist --find-interpreter
+          # Disable sccache on tag releases for reproducible builds.
+          sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
+          working-directory: bindings/python
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-linux-${{ matrix.target }}
+          path: bindings/python/dist
+
+  # ── Linux / musllinux (Alpine) ──────────────────────────────────────────
+  musllinux:
+    name: Linux musllinux (${{ matrix.target }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [x86_64, aarch64]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Build wheels (musllinux)
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          manylinux: musllinux_1_2
+          args: --release --out dist --find-interpreter
+          sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
+          working-directory: bindings/python
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-musllinux-${{ matrix.target }}
+          path: bindings/python/dist
+
+  # ── macOS ────────────────────────────────────────────────────────────────
+  macos:
+    name: macOS (${{ matrix.platform.target }})
+    runs-on: ${{ matrix.platform.runner }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - runner: macos-13        # Intel x86_64
+            target: x86_64-apple-darwin
+          - runner: macos-latest    # Apple Silicon aarch64
+            target: aarch64-apple-darwin
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      # Install all supported Python versions so --find-interpreter picks them up.
+      - name: Set up Python (all supported versions)
+        uses: actions/setup-python@v5
+        with:
+          python-version: |
+            3.9
+            3.10
+            3.11
+            3.12
+            3.13
+
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.platform.target }}
+          args: --release --out dist --find-interpreter
+          sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
+          working-directory: bindings/python
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-macos-${{ matrix.platform.target }}
+          path: bindings/python/dist
+
+  # ── Windows ──────────────────────────────────────────────────────────────
+  windows:
+    name: Windows (x86_64)
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Python (all supported versions)
+        uses: actions/setup-python@v5
+        with:
+          python-version: |
+            3.9
+            3.10
+            3.11
+            3.12
+            3.13
+
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: x64
+          args: --release --out dist --find-interpreter
+          sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
+          working-directory: bindings/python
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-windows-x86_64
+          path: bindings/python/dist
+
+  # ── Source distribution ──────────────────────────────────────────────────
+  sdist:
+    name: Source distribution
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      # sdist lets users install on unlisted platforms by compiling from source
+      # (requires Rust). maturin bundles the full Cargo workspace source so the
+      # path dependencies (crates/core, crates/gpu) are included in the tarball.
+      - name: Build sdist
+        uses: PyO3/maturin-action@v1
+        with:
+          command: sdist
+          args: --out dist
+          working-directory: bindings/python
+
+      - name: Upload sdist
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-sdist
+          path: bindings/python/dist
+
+  # ── Publish ───────────────────────────────────────────────────────────────
+  publish:
+    name: Publish to PyPI
+    needs: [linux, musllinux, macos, windows, sdist]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    environment: pypi
+    permissions:
+      id-token: write   # required for OIDC trusted publishing
+    steps:
+      - name: Download all wheels
+        uses: actions/download-artifact@v4
+        with:
+          pattern: wheels-*
+          path: dist
+          merge-multiple: true
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist

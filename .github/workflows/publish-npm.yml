@@ -1,0 +1,77 @@
+name: publish-npm
+
+# Compiles the WASM binding and publishes @ngv/opx to npm.
+# Trigger: push a semver tag (e.g. v0.1.0) or run manually.
+#
+# The compiled .wasm binary is bundled directly into the npm package.
+# Consumers run: npm install @ngv/opx
+# No Rust toolchain is needed at install time.
+#
+# Required secret:
+#   NPM_TOKEN — a granular access token from https://www.npmjs.com/settings/~/tokens
+#   (scope: read+write for @ngv/opx, or org-level for @ngv/*)
+#
+# The package ships both a browser build (ESM + .wasm) and a Node.js build
+# (CommonJS + .wasm) in a single tarball, selected via the "exports" field
+# in package.json.
+
+on:
+  push:
+    tags: ["v[0-9]+.[0-9]+.[0-9]+"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Publish @ngv/opx to npm
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Install Rust toolchain (with wasm32 target)
+        uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # stable
+        with:
+          toolchain: stable
+          targets: wasm32-unknown-unknown
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
+        with:
+          workspaces: . -> target
+
+      - name: Install wasm-pack
+        run: cargo install wasm-pack --locked
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+
+      # Build both targets. wasm-pack compiles Rust → .wasm and generates the
+      # JS glue (ESM for web, CommonJS for node) and TypeScript definitions.
+      - name: Build WASM (browser target)
+        working-directory: bindings/wasm
+        run: wasm-pack build --target web --out-dir pkg-web --release
+
+      - name: Build WASM (Node.js target)
+        working-directory: bindings/wasm
+        run: wasm-pack build --target nodejs --out-dir pkg-node --release
+
+      # Smoke-test the built package before publishing.
+      - name: Run Node parity tests
+        run: |
+          node bindings/wasm/tests/u4_black76.mjs
+          node bindings/wasm/tests/u5_iv.mjs
+          node bindings/wasm/tests/u8_package_shape.mjs
+
+      - name: Publish to npm
+        if: startsWith(github.ref, 'refs/tags/')
+        working-directory: bindings/wasm
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
