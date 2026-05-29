@@ -9,8 +9,15 @@ description = "PyO3 Python bindings for ngv-opx."
 name = "ngv_opx"
 crate-type = ["cdylib"]
 
+[features]
+# GPU support is opt-in for source builds (maturin develop --features gpu).
+# Distribution wheels are built without it so they compile on headless CI
+# runners (no DirectX/Metal SDK setup required). At runtime the Python API
+# is identical — gpu_available() returns false and batch functions use CPU.
+gpu = ["dep:ngv-opx-gpu"]
+
 [dependencies]
 ngv-opx-core.workspace = true
-ngv-opx-gpu.workspace = true
+ngv-opx-gpu = { workspace = true, optional = true }
 pyo3 = { version = "0.22", features = ["extension-module"] }
 numpy = "0.22"
