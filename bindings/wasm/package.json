@@ -1,6 +1,6 @@
 {
   "name": "@ngv/opx",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Black-76 option pricing and implied-vol solver for browsers and Node, compiled from Rust to WebAssembly.",
   "license": "BSD-3-Clause",
   "type": "module",

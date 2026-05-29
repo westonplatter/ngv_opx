@@ -1,6 +1,6 @@
 [package]
 name = "ngv-opx-python"
-version = "0.1.0"
+version = "0.1.1"
 edition.workspace = true
 license.workspace = true
 description = "PyO3 Python bindings for ngv-opx."
@@ -17,7 +17,7 @@ crate-type = ["cdylib"]
 gpu = ["dep:ngv-opx-gpu"]
 
 [dependencies]
-ngv-opx-core = { path = "../../crates/core", version = "0.1.0" }
-ngv-opx-gpu  = { path = "../../crates/gpu",  version = "0.1.0", optional = true }
+ngv-opx-core = { path = "../../crates/core", version = "0.1.1" }
+ngv-opx-gpu  = { path = "../../crates/gpu",  version = "0.1.1", optional = true }
 pyo3 = { version = "0.22", features = ["extension-module"] }
 numpy = "0.22"
