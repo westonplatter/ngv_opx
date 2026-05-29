@@ -3,37 +3,58 @@
   "bump-minor-pre-major": true,
   "bump-patch-for-minor-pre-major": true,
   "packages": {
-    ".": {
+    "crates/core": {
       "release-type": "rust",
+      "include-component-in-tag": false,
       "extra-files": [
         {
           "type": "toml",
-          "path": "crates/gpu/Cargo.toml",
+          "path": "/Cargo.toml",
+          "jsonpath": "$.workspace.package.version"
+        },
+        {
+          "type": "toml",
+          "path": "/crates/gpu/Cargo.toml",
+          "jsonpath": "$.package.version"
+        },
+        {
+          "type": "toml",
+          "path": "/crates/gpu/Cargo.toml",
           "jsonpath": "$.dependencies['ngv-opx-core'].version"
         },
         {
           "type": "toml",
-          "path": "bindings/python/Cargo.toml",
+          "path": "/bindings/python/Cargo.toml",
+          "jsonpath": "$.package.version"
+        },
+        {
+          "type": "toml",
+          "path": "/bindings/python/Cargo.toml",
           "jsonpath": "$.dependencies['ngv-opx-core'].version"
         },
         {
           "type": "toml",
-          "path": "bindings/python/Cargo.toml",
+          "path": "/bindings/python/Cargo.toml",
           "jsonpath": "$.dependencies['ngv-opx-gpu'].version"
         },
         {
           "type": "toml",
-          "path": "bindings/wasm/Cargo.toml",
+          "path": "/bindings/wasm/Cargo.toml",
+          "jsonpath": "$.package.version"
+        },
+        {
+          "type": "toml",
+          "path": "/bindings/wasm/Cargo.toml",
           "jsonpath": "$.dependencies['ngv-opx-core'].version"
         },
         {
           "type": "toml",
-          "path": "bindings/python/pyproject.toml",
+          "path": "/bindings/python/pyproject.toml",
           "jsonpath": "$.project.version"
         },
         {
           "type": "json",
-          "path": "bindings/wasm/package.json",
+          "path": "/bindings/wasm/package.json",
           "jsonpath": "$.version"
         }
       ]
