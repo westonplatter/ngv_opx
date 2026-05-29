@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "ngv-opx"
-version = "0.1.0"
+version = "0.1.1"
 description = "NGV option pricer: Rust core (CPU + GPU) with Python interface. Black-76 production, Black-Scholes experimental."
 license = "BSD-3-Clause"
 license-files = ["LICENSE"]
