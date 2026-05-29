@@ -272,7 +272,25 @@ with `d₁ = (ln(F/K) + ½σ²T) / (σ√T)` and `d₂ = d₁ - σ√T`.
 
 ### Implied Volatility
 
-Newton-Raphson on vega, with Brenner-Subrahmanyam (ATM) seed. f64 throughout because deep-ITM/OTM short-dated options on CL push f32 past its ~7 digits of headroom (time value can be sub-1e-7 of the forward).
+The solver is a two-stage fixed-cost map: a closed-form seed followed by exactly three Halley refinement steps, with no convergence loop.
+
+```
+validate → parity-normalize puts to calls → SR seed → 3 × Halley → σ
+```
+
+**Stage 1 — Stefanica-Radoičić (SR) seed.** Instead of guessing ATM vol or splitting the domain into regions, the solver uses a closed-form formula from Stefanica & Radoičić (2017). It replaces the normal CDF in Black-76 with Pólya's rational approximation, making the pricing equation directly invertible. The result is a single analytic expression that produces a seed within ~5% of the true implied vol everywhere in the no-arbitrage band — no domain partitioning, no region logic.
+
+**Stage 2 — Halley refinement.** Three fixed iterations of Halley's method (cubic convergence) refine the seed to machine precision. From a 5%-accurate seed, two steps reach ~1e-9 in σ; the third closes the remaining gap to the f64 noise floor. There is no per-row convergence check — every valid input runs the same three steps.
+
+**Why this differs from Jäckel's "Let's Be Rational."** Jäckel's solver uses a region-partitioned rational-cubic seed (the domain is split into four zones near ATM and the no-arbitrage boundaries) and Householder-3 refinement (quartic convergence), wrapped in bracket logic with a bisection fallback to catch overshoot. This is highly accurate but branchy: which region a row falls into, whether the step overshoots the bracket, and whether the reversal counter trips all determine what code runs.
+
+This solver makes a different trade. By pairing a uniform SR seed with Halley — which doesn't overshoot from a 5%-accurate start — the bracket and bisection logic become unnecessary. Every valid row executes the same sequence of arithmetic instructions regardless of moneyness or vol level. This "straight-line compute" property is the structural goal:
+
+- **CPU SIMD**: the compiler can auto-vectorize a fixed-instruction body across 4–16 rows per cycle; a variable-trip-count loop or region branch defeats that.
+- **GPU portability**: a GPU warp runs in lockstep — if rows diverge in iteration count, the warp serializes. Fixed three steps means every thread in a warp does the same work.
+- **Determinism**: no data-dependent branches, so bit-identical output regardless of which thread processes a row.
+
+The accuracy trade-off is narrow: worst-case round-trip σ error is ~1.74e-9 in the deep wings vs ~3e-13 in the bulk — both well below any realistic downstream tolerance. See [`docs/ngv-solver.md`](docs/ngv-solver.md) for the full derivation and test coverage.
 
 ## License
 
