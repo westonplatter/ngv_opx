@@ -19,6 +19,12 @@ name: publish-python
 #   macOS   — x86_64 (Intel, macos-13 runner)
 #   macOS   — aarch64 (Apple Silicon, macos-latest runner)
 #   Windows — x86_64
+#
+# GPU note: distribution wheels are built without the `gpu` Cargo feature
+# (--no-default-features) because headless CI runners have no DirectX/Metal
+# driver and wgpu's platform backends fail to compile in that environment.
+# To build a GPU-enabled wheel locally:
+#   cd bindings/python && maturin build --release --features gpu
 
 on:
   push:
@@ -58,7 +64,8 @@ jobs:
           manylinux: auto
           # --find-interpreter: maturin discovers all CPython interpreters in
           # the manylinux container (cp39–cp313) and builds one wheel per version.
-          args: --release --out dist --find-interpreter
+          # --no-default-features: skip the gpu feature (wgpu) for portable wheels.
+          args: --release --out dist --find-interpreter --no-default-features
           # Disable sccache on tag releases for reproducible builds.
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           working-directory: bindings/python
@@ -92,7 +99,7 @@ jobs:
         with:
           target: ${{ matrix.target }}
           manylinux: musllinux_1_2
-          args: --release --out dist --find-interpreter
+          args: --release --out dist --find-interpreter --no-default-features
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           working-directory: bindings/python
 
@@ -133,7 +140,7 @@ jobs:
         uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1.51.0
         with:
           target: ${{ matrix.platform.target }}
-          args: --release --out dist --find-interpreter
+          args: --release --out dist --find-interpreter --no-default-features
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           working-directory: bindings/python
 
@@ -165,7 +172,7 @@ jobs:
         uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1.51.0
         with:
           target: x64
-          args: --release --out dist --find-interpreter
+          args: --release --out dist --find-interpreter --no-default-features
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           working-directory: bindings/python
 
