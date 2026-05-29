@@ -14,6 +14,18 @@ default-members = [
     "crates/gpu",
 ]
 
+# Shared package metadata — all crates inherit these via `field.workspace = true`.
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "BSD-3-Clause"
+
+# Internal crate dependencies declared here so that version bumps only need to
+# happen in one place (release-please updates this table via extra-files).
+[workspace.dependencies]
+ngv-opx-core = { path = "crates/core", version = "0.1.0" }
+ngv-opx-gpu  = { path = "crates/gpu",  version = "0.1.0" }
+
 # Size-optimized release profile, scoped to the wasm binding only. The
 # workspace's other crates (core, gpu) keep cargo's default release profile
 # so `cargo run --release --example bench_native` reflects realistic native

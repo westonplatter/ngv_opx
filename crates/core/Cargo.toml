@@ -1,8 +1,8 @@
 [package]
 name = "ngv-opx-core"
-version = "0.1.0"
-edition = "2021"
-license = "BSD-3-Clause"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
 description = "Pure-Rust option pricing core: Black-76 + Black-Scholes CPU, no FFI."
 
 [lib]
