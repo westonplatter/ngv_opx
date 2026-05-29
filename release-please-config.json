@@ -8,13 +8,23 @@
       "extra-files": [
         {
           "type": "toml",
-          "path": "Cargo.toml",
-          "jsonpath": "$.workspace.dependencies['ngv-opx-core'].version"
+          "path": "crates/gpu/Cargo.toml",
+          "jsonpath": "$.dependencies['ngv-opx-core'].version"
         },
         {
           "type": "toml",
-          "path": "Cargo.toml",
-          "jsonpath": "$.workspace.dependencies['ngv-opx-gpu'].version"
+          "path": "bindings/python/Cargo.toml",
+          "jsonpath": "$.dependencies['ngv-opx-core'].version"
+        },
+        {
+          "type": "toml",
+          "path": "bindings/python/Cargo.toml",
+          "jsonpath": "$.dependencies['ngv-opx-gpu'].version"
+        },
+        {
+          "type": "toml",
+          "path": "bindings/wasm/Cargo.toml",
+          "jsonpath": "$.dependencies['ngv-opx-core'].version"
         },
         {
           "type": "toml",
