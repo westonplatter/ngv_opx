@@ -1,0 +1,34 @@
+name: release-please
+
+# Creates (or updates) a "Release PR" on every push to main.
+# When that PR is merged, release-please:
+#   1. Tags the commit with the new version (e.g. v0.2.0)
+#   2. Creates a GitHub Release with the CHANGELOG entries
+#
+# The v* tag then triggers the three publish workflows:
+#   - publish-crate.yml   → crates.io
+#   - publish-python.yml  → PyPI
+#   - publish-npm.yml     → npm
+#
+# Permissions required:
+#   contents: write      — to push tags and create GitHub Releases
+#   pull-requests: write — to open / update the Release PR
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    name: Release Please
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
