@@ -105,7 +105,12 @@ ivs    = ngv_opx.black76_implied_volatility_vectorized(
 
 The IV solver returns `-1.0` as a **sentinel** when IV is mathematically undefined (`T = 0`, price below intrinsic, price above the discounted upper bound). Callers must check for this — see `examples/example.py` for handling and `tests/test_black76_vs_vollib.py` for the contract.
 
-### JavaScript
+### JavaScript / WebAssembly
+
+One npm package, **two builds in a single tarball** — your bundler/runtime picks the right one automatically via the `exports` map:
+
+- **Browser** — ESM + `.wasm`, loaded with a one-time `await init()`.
+- **Node.js** — CommonJS *and* ESM entry points, no init needed.
 
 Install from npm:
 
@@ -114,24 +119,55 @@ npm install @ngv/opx
 ```
 
 ```ts
-import { black76, impliedVolBatch } from "@ngv/opx";
+import { black76, impliedVol, black76Batch, impliedVolBatch } from "@ngv/opx";
 
 // Single option: price a 30-day ATM CL call
 const price = black76(75, 75, 0.045, 0.32, 30 / 365, /* isCall */ true);
 
+// Single option: recover implied vol from a market price
+const iv = impliedVol(75, 75, 0.045, 30 / 365, price, /* isCall */ true);
+
 // Vectorized: whole surface in one call.
 // Inputs are Float64Array; isCalls is Uint8Array (0=put, 1=call).
+const prices = black76Batch(
+  Float64Array.of(75, 75, 75),                     // forwards
+  Float64Array.of(75, 80, 70),                     // strikes
+  Float64Array.of(0.045, 0.045, 0.045),            // rates
+  Float64Array.of(0.32, 0.35, 0.34),               // vols
+  Float64Array.of(30 / 365, 30 / 365, 30 / 365),   // times
+  Uint8Array.of(1, 1, 0),                          // is_calls
+);
 const ivs = impliedVolBatch(
   Float64Array.of(75, 75, 75),                     // forwards
   Float64Array.of(75, 80, 70),                     // strikes
   Float64Array.of(0.045, 0.045, 0.045),            // rates
   Float64Array.of(30 / 365, 30 / 365, 30 / 365),   // times
-  Float64Array.of(2.99, 1.20, 5.40),               // market prices
+  prices,                                          // market prices
   Uint8Array.of(1, 1, 0),                          // is_calls
 );
 ```
 
-In the browser, `await init()` once before the first call. Node needs no init. Same `-1.0` sentinel applies. See [`bindings/wasm/README.md`](bindings/wasm/README.md) for the full API.
+**Browser** needs a one-time init before the first call; **Node** does not:
+
+```ts
+import { init, black76 } from "@ngv/opx";
+
+await init();                  // works when package files are served as-is
+const price = black76(75, 75, 0.045, 0.32, 30 / 365, true);
+```
+
+Bundlers may move or fingerprint `.wasm` assets. If the default browser
+initialization cannot resolve the wasm file, pass the asset URL explicitly:
+
+```ts
+import wasmUrl from "@ngv/opx/pkg-web/ngv_opx_wasm_bg.wasm?url";
+import { init, black76 } from "@ngv/opx";
+
+await init({ wasmUrl });
+const price = black76(75, 75, 0.045, 0.32, 30 / 365, true);
+```
+
+The same `-1.0` IV sentinel applies (`impliedVol*` returns `-1.0` when IV is undefined — `T = 0`, price below intrinsic, or above the discounted upper bound). See [`bindings/wasm/README.md`](bindings/wasm/README.md) for the full API.
 
 ## Benchmarks
 
