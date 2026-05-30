@@ -5,14 +5,24 @@ name: release-please
 #   1. Tags the commit with the new version (e.g. v0.2.0)
 #   2. Creates a GitHub Release with the CHANGELOG entries
 #
-# The v* tag then triggers the three publish workflows:
+# Once a release is created, the trigger-publish job below dispatches the
+# three publish workflows against the new tag:
 #   - publish-crate.yml   → crates.io
 #   - publish-python.yml  → PyPI
 #   - publish-npm.yml     → npm
 #
+# Why dispatch instead of relying on the tag push?
+#   A tag pushed by release-please uses the default GITHUB_TOKEN, and tag/push
+#   events from GITHUB_TOKEN do NOT trigger other workflows (GitHub's recursion
+#   prevention). workflow_dispatch and repository_dispatch are the documented
+#   exceptions, so we explicitly dispatch the publish workflows here. Passing
+#   --ref <tag> makes github.ref a refs/tags/* ref inside each publish run,
+#   satisfying their `if: startsWith(github.ref, 'refs/tags/')` guards.
+#
 # Permissions required:
 #   contents: write      — to push tags and create GitHub Releases
 #   pull-requests: write — to open / update the Release PR
+#   actions: write       — to dispatch the publish workflows
 
 on:
   push:
@@ -21,14 +31,35 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  actions: write
 
 jobs:
   release-please:
     name: Release Please
     runs-on: ubuntu-latest
+    outputs:
+      releases_created: ${{ steps.release.outputs.releases_created }}
+      tag_name: ${{ steps.release.outputs['crates/core--tag_name'] }}
     steps:
       - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        id: release
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+
+  trigger-publish:
+    name: Trigger publish workflows
+    needs: release-please
+    if: needs.release-please.outputs.releases_created == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch publish workflows for ${{ needs.release-please.outputs.tag_name }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.release-please.outputs.tag_name }}
+        run: |
+          for wf in publish-crate.yml publish-python.yml publish-npm.yml; do
+            echo "Dispatching $wf @ $TAG"
+            gh workflow run "$wf" --ref "$TAG" --repo "$GITHUB_REPOSITORY"
+          done
