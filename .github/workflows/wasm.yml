@@ -14,8 +14,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
-    name: Build wasm + Node parity tests
+  test-js-wasm:
+    name: test-js-wasm
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:

@@ -14,8 +14,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  rust:
-    name: Rust tests
+  test-rust:
+    name: test-rust
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -33,8 +33,8 @@ jobs:
       - name: cargo test (workspace)
         run: cargo test
 
-  python:
-    name: Python tests (${{ matrix.python-version }})
+  test-python:
+    name: test-python (${{ matrix.python-version }})
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
