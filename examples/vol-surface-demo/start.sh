@@ -8,8 +8,11 @@ echo "==> Building @ngv/opx WASM (browser target)…"
 echo "==> Installing frontend dependencies…"
 (cd "$(dirname "$0")/frontend" && npm install)
 
+echo "==> Installing backend dependencies (uv)…"
+(cd "$(dirname "$0")/backend" && uv sync)
+
 echo "==> Starting FastAPI backend on :8000…"
-(cd "$(dirname "$0")/backend" && uvicorn main:app --host 0.0.0.0 --port 8000) &
+(cd "$(dirname "$0")/backend" && uv run uvicorn main:app --host 0.0.0.0 --port 8000) &
 BACKEND_PID=$!
 
 echo "==> Starting Vite dev server on :5173…"
