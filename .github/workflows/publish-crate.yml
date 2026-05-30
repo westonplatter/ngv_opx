@@ -1,7 +1,11 @@
 name: publish-crate
 
 # Publishes ngv-opx-core and ngv-opx-gpu to crates.io.
-# Trigger: push a semver tag (e.g. v0.1.0) or run manually.
+# Trigger: push a shared core tag (e.g. v0.1.0) or run manually.
+#
+# This workflow intentionally accepts ONLY the shared v* tag — never the
+# python-v* / npm-v* package-only tags. Binding-only releases must not
+# republish the Rust crates.
 #
 # Required secret:
 #   CRATES_IO_TOKEN — an API token from https://crates.io/me

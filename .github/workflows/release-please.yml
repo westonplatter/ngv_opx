@@ -1,18 +1,31 @@
 name: release-please
 
-# Creates (or updates) a "Release PR" on every push to main.
-# When that PR is merged, release-please:
-#   1. Tags the commit with the new version (e.g. v0.2.0)
-#   2. Creates a GitHub Release with the CHANGELOG entries
+# CANONICAL CORE RELEASE LANE.
 #
-# The v* tag then triggers the three publish workflows:
+# Creates (or updates) a "Release PR" on every push to main. When that PR is
+# merged, release-please:
+#   1. Tags the commit with the new shared version (e.g. v0.2.0)
+#   2. Creates a GitHub Release with the CHANGELOG entries
+#   3. Bumps every crate + binding manifest to the same version (lockstep).
+#
+# The trigger-publish job below then explicitly dispatches all three publish
+# workflows at that tag:
 #   - publish-crate.yml   → crates.io
 #   - publish-python.yml  → PyPI
 #   - publish-npm.yml     → npm
 #
+# Why explicit dispatch instead of relying on the tag-push trigger: GitHub does
+# NOT fire `on: push` workflows for tags created with GITHUB_TOKEN (loop
+# prevention). A release-please tag would therefore publish nothing on its own.
+# workflow_dispatch is exempt from that rule, so we dispatch explicitly here.
+#
+# This is the ONLY lane that publishes crates.io. Package-only (PyPI/npm)
+# releases go through release-python-package.yml / release-npm-package.yml.
+#
 # Permissions required:
 #   contents: write      — to push tags and create GitHub Releases
 #   pull-requests: write — to open / update the Release PR
+#   actions: write       — to dispatch the publish workflows
 
 on:
   push:
@@ -21,14 +34,41 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  actions: write
 
 jobs:
   release-please:
     name: Release Please
     runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
-      - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+      - id: release
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+
+  trigger-publish:
+    name: Dispatch publish workflows
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Dispatch crate, Python, and npm publish at ${{ needs.release-please.outputs.tag_name }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.release-please.outputs.tag_name }}
+        run: |
+          set -euo pipefail
+          echo "Dispatching publish workflows at tag $TAG"
+          gh workflow run publish-crate.yml  --ref "$TAG"
+          gh workflow run publish-python.yml --ref "$TAG"
+          gh workflow run publish-npm.yml    --ref "$TAG"

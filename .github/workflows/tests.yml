@@ -14,6 +14,28 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  versions:
+    name: Manifest version consistency
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.x"
+
+      # No --version: just assert the manifests are internally consistent
+      # (pyproject vs Cargo, package.json vs Cargo, core vs deps). This catches
+      # a half-finished version bump at PR time, in either release lane.
+      - name: Check Python binding consistency
+        run: python3 scripts/check-release-versions.py --package python
+
+      - name: Check npm binding consistency
+        run: python3 scripts/check-release-versions.py --package npm
+
   rust:
     name: Rust tests
     runs-on: ubuntu-latest
