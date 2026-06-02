@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@ngv/opx": "file:../../../bindings/wasm",
+    "@westonplatter/ngv-opx": "file:../../../bindings/wasm",
     "plotly.js-dist-min": "^2.35.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"

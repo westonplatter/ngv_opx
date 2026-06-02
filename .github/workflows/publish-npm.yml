@@ -1,17 +1,17 @@
 name: publish-npm
 
-# Compiles the WASM binding and publishes @ngv/opx to npm.
+# Compiles the WASM binding and publishes @westonplatter/ngv-opx to npm.
 # Trigger: a shared core tag (v0.1.0) or an npm package-only tag
 # (npm-v0.1.2), or a manual dispatch. Both tag shapes publish to npm;
 # only the shared v* tag also publishes crates.io (see publish-crate.yml).
 #
 # The compiled .wasm binary is bundled directly into the npm package.
-# Consumers run: npm install @ngv/opx
+# Consumers run: npm install @westonplatter/ngv-opx
 # No Rust toolchain is needed at install time.
 #
 # Required secret:
 #   NPM_TOKEN — a granular access token from https://www.npmjs.com/settings/~/tokens
-#   (scope: read+write for @ngv/opx, or org-level for @ngv/*)
+#   (scope: read+write for @westonplatter/ngv-opx, or account-wide for @westonplatter/*)
 #
 # The package ships both a browser build (ESM + .wasm) and a Node.js build
 # (CommonJS + .wasm) in a single tarball, selected via the "exports" field
@@ -29,7 +29,7 @@ permissions:
 
 jobs:
   publish:
-    name: Publish @ngv/opx to npm
+    name: Publish @westonplatter/ngv-opx to npm
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:

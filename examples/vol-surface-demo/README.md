@@ -2,14 +2,14 @@
 
 A live implied-volatility visualization that simulates an options market: the backend
 streams **individual trades**, and the browser solves each traded price back into an
-implied vol using the `@ngv/opx` WASM solver, updating only the points that traded.
+implied vol using the `@westonplatter/ngv-opx` WASM solver, updating only the points that traded.
 
 There are two separate volatility steps, and they happen on opposite sides:
 
 1. **Backend (vols → prices).** The server knows a *fair* synthetic vol surface and uses
    Black-76 to **price** options. It never sends vols — only prices go over the wire.
 2. **Frontend (prices → vols).** When a contract trades, the browser **solves** that one
-   price back into an implied vol with the `@ngv/opx` WASM solver and moves that single
+   price back into an implied vol with the `@westonplatter/ngv-opx` WASM solver and moves that single
    point on the smile.
 
 The stream works in two stages:
@@ -25,7 +25,7 @@ The stream works in two stages:
         vols → prices                          prices → vols  (the IV solve)
 ┌───────────────────┐                    ┌─────────────────────────┐
 │  FastAPI backend  │  snapshot + trades │  React + Vite frontend  │
-│  Black-76 pricing │ ── WebSocket ───►  │  @ngv/opx WASM solver   │
+│  Black-76 pricing │ ── WebSocket ───►  │  @westonplatter/ngv-opx WASM solver   │
 │  :8000/ws         │   (JSON messages)  │  Plotly chart  :5173    │
 └───────────────────┘                    └─────────────────────────┘
    knows fair vols                          solves IV per trade
@@ -39,7 +39,7 @@ bash start.sh
 
 This one-shot script:
 
-1. Builds the `@ngv/opx` WASM bundle (`wasm-pack build --target web`).
+1. Builds the `@westonplatter/ngv-opx` WASM bundle (`wasm-pack build --target web`).
 2. Installs frontend deps (`npm install`).
 3. Installs backend deps with **uv** (`uv sync`).
 4. Starts the FastAPI backend on **:8000** and the Vite dev server on **:5173**.
@@ -96,7 +96,7 @@ uv run uvicorn main:app --host 0.0.0.0 --port 8000
 A React + TypeScript app built with Vite that consumes the trade stream and renders the
 vol surface as a 2D chart.
 
-- **`src/App.tsx`** — initializes the `@ngv/opx` WASM module once, connects to the
+- **`src/App.tsx`** — initializes the `@westonplatter/ngv-opx` WASM module once, connects to the
   backend WebSocket (auto-reconnecting on drop), and keeps the surface in memory so it
   can patch individual points as trades arrive.
 - **Snapshot** — on the opening `snapshot`, it picks the OTM option at each strike (call
@@ -113,7 +113,7 @@ vol surface as a 2D chart.
   given strike.
 - A status bar shows connection state, live spot, and a trades/sec counter.
 
-Key dependencies: `react`, `plotly.js-dist-min`, and `@ngv/opx` (linked locally from
+Key dependencies: `react`, `plotly.js-dist-min`, and `@westonplatter/ngv-opx` (linked locally from
 `../../bindings/wasm`). Vite's `optimizeDeps.exclude` keeps esbuild from pre-bundling the
 WASM package so the `wasm-pack` `init()` URL resolution works.
 

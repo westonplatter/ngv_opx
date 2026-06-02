@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { init, impliedVol, impliedVolBatch } from "@ngv/opx";
+import { init, impliedVol, impliedVolBatch } from "@westonplatter/ngv-opx";
 // Vite resolves this ?url import to the hashed asset path at build time.
 // @ts-expect-error — no declared type for ?url imports
-import wasmUrl from "@ngv/opx/pkg-web/ngv_opx_wasm_bg.wasm?url";
+import wasmUrl from "@westonplatter/ngv-opx/pkg-web/ngv_opx_wasm_bg.wasm?url";
 import Plotly from "plotly.js-dist-min";
 
 // ---------- constants ----------

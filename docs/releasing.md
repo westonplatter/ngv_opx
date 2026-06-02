@@ -7,7 +7,7 @@ This project ships four artifacts from one repository:
 | `ngv-opx-core`   | crates.io | `crates/core`     |
 | `ngv-opx-gpu`    | crates.io | `crates/gpu`      |
 | `ngv-opx` (PyPI) | PyPI      | `bindings/python` |
-| `@ngv/opx`       | npm       | `bindings/wasm`   |
+| `@westonplatter/ngv-opx`       | npm       | `bindings/wasm`   |
 
 There are **three release lanes**. Pick the smallest one that fits the change.
 

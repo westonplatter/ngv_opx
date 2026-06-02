@@ -5,7 +5,7 @@
 [![Rust](https://img.shields.io/badge/rust-stable-orange?logo=rust)](https://www.rust-lang.org/)
 [![License: BSD 3-Clause](https://img.shields.io/badge/license-BSD%203--Clause-blue)](LICENSE)
 
-A Rust option-pricing and implied-volatility core, with first-class **Python** (PyO3 / maturin) and **JavaScript/WebAssembly** (`@ngv/opx`, browser + Node) bindings. f64 throughout, scalar and vectorized entry points in each binding.
+A Rust option-pricing and implied-volatility core, with first-class **Python** (PyO3 / maturin) and **JavaScript/WebAssembly** (`@westonplatter/ngv-opx`, browser + Node) bindings. f64 throughout, scalar and vectorized entry points in each binding.
 
 ## Current Scope
 
@@ -115,11 +115,11 @@ One npm package, **two builds in a single tarball** — your bundler/runtime pic
 Install from npm:
 
 ```bash
-npm install @ngv/opx
+npm install @westonplatter/ngv-opx
 ```
 
 ```ts
-import { black76, impliedVol, black76Batch, impliedVolBatch } from "@ngv/opx";
+import { black76, impliedVol, black76Batch, impliedVolBatch } from "@westonplatter/ngv-opx";
 
 // Single option: price a 30-day ATM CL call
 const price = black76(75, 75, 0.045, 0.32, 30 / 365, /* isCall */ true);
@@ -150,7 +150,7 @@ const ivs = impliedVolBatch(
 **Browser** needs a one-time init before the first call; **Node** does not:
 
 ```ts
-import { init, black76 } from "@ngv/opx";
+import { init, black76 } from "@westonplatter/ngv-opx";
 
 await init();                  // works when package files are served as-is
 const price = black76(75, 75, 0.045, 0.32, 30 / 365, true);
@@ -160,8 +160,8 @@ Bundlers may move or fingerprint `.wasm` assets. If the default browser
 initialization cannot resolve the wasm file, pass the asset URL explicitly:
 
 ```ts
-import wasmUrl from "@ngv/opx/pkg-web/ngv_opx_wasm_bg.wasm?url";
-import { init, black76 } from "@ngv/opx";
+import wasmUrl from "@westonplatter/ngv-opx/pkg-web/ngv_opx_wasm_bg.wasm?url";
+import { init, black76 } from "@westonplatter/ngv-opx";
 
 await init({ wasmUrl });
 const price = black76(75, 75, 0.045, 0.32, 30 / 365, true);
@@ -192,8 +192,8 @@ Header reads top-to-bottom as **language → library → call shape → unit**, 
       <th align="center">py_vollib</th>
       <th align="center">ngv_opx</th>
       <th align="center"><b>ngv_opx</b></th>
-      <th align="center">@ngv/opx</th>
-      <th align="center"><b>@ngv/opx</b></th>
+      <th align="center">@westonplatter/ngv-opx</th>
+      <th align="center"><b>@westonplatter/ngv-opx</b></th>
       <th align="center"><b>ngv_opx</b></th>
     </tr>
     <tr>

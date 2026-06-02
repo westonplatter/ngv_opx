@@ -7,6 +7,6 @@ export default defineConfig({
   optimizeDeps: {
     // Prevent esbuild from pre-bundling the WASM package — it can't inline
     // .wasm binaries and would break the wasm-pack init() URL resolution.
-    exclude: ["@ngv/opx"],
+    exclude: ["@westonplatter/ngv-opx"],
   },
 });

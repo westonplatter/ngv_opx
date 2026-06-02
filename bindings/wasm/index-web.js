@@ -3,7 +3,7 @@
 // can be called.
 //
 // Usage:
-//   import { init, black76, impliedVolBatch } from "@ngv/opx";
+//   import { init, black76, impliedVolBatch } from "@westonplatter/ngv-opx";
 //   await init();
 //   const price = black76(75, 75, 0.045, 0.35, 30/365, true);
 //
@@ -27,7 +27,7 @@ let _readyUrl = undefined;
  * @param {object} [opts]
  * @param {string | URL | Request} [opts.wasmUrl] Explicit URL to the
  *   wasm binary. **Required when consuming this package through a bundler
- *   like Vite or webpack** — pass `new URL("@ngv/opx/pkg-web/ngv_opx_wasm_bg.wasm?url", import.meta.url)`
+ *   like Vite or webpack** — pass `new URL("@westonplatter/ngv-opx/pkg-web/ngv_opx_wasm_bg.wasm?url", import.meta.url)`
  *   or use the bundler's `?url` import syntax. If omitted, init falls back
  *   to wasm-pack's default URL resolution, which only works when the
  *   package files are served at their published relative paths (no
@@ -49,7 +49,7 @@ export async function init(opts = {}) {
     // — wasm-pack only instantiates once per module, so the new URL would
     // be silently ignored. Warn so the mismatch surfaces during development.
     console.warn(
-      "[@ngv/opx] init() called again with a different wasmUrl; " +
+      "[@westonplatter/ngv-opx] init() called again with a different wasmUrl; " +
         "the originally-loaded module is reused. " +
         `first=${String(_readyUrl)} second=${String(opts.wasmUrl)}`,
     );

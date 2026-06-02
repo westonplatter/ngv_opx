@@ -1,4 +1,4 @@
-// U8 test: consume the @ngv/opx package via its public entry points
+// U8 test: consume the @westonplatter/ngv-opx package via its public entry points
 // (index-node.mjs and index-node.cjs). Validates that the Node-facing
 // conditional exports resolve and re-export the expected wasm functions.
 

@@ -28,8 +28,8 @@ COLUMNS = [
     ("Python — py_vollib",                "PYTHON",     "py_vollib",  "single",     False),
     ("Python — ngv_opx (single)",         "PYTHON",     "ngv_opx",    "single",     False),
     ("Python — ngv_opx (vectorized)",     "PYTHON",     "ngv_opx",    "vectorized", True),
-    ("JavaScript — @ngv/opx (single)",    "JAVASCRIPT", "@ngv/opx",   "single",     False),
-    ("JavaScript — @ngv/opx (vectorized)","JAVASCRIPT", "@ngv/opx",   "vectorized", True),
+    ("JavaScript — @westonplatter/ngv-opx (single)",    "JAVASCRIPT", "@westonplatter/ngv-opx",   "single",     False),
+    ("JavaScript — @westonplatter/ngv-opx (vectorized)","JAVASCRIPT", "@westonplatter/ngv-opx",   "vectorized", True),
     ("Rust — ngv_opx (vectorized)",       "RUST",       "ngv_opx",    "vectorized", True),
 ]
 
