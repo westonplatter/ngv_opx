@@ -30,10 +30,20 @@ together. `release-please` owns this lane and keeps all manifests in lockstep.
 
 The `vX.Y.Z` tag publishes **all four artifacts at the same version**.
 
-> Note: tags created by `release-please` use `GITHUB_TOKEN`, and GitHub does not
-> fire `on: push` workflows for those tags (loop prevention). That is why
-> `release-please.yml` dispatches the publish workflows explicitly via
-> `gh workflow run --ref <tag>` rather than relying on the tag-push trigger.
+> **Why `release-please.yml` dispatches the publishers explicitly.** Tags created
+> by `release-please` use the default `GITHUB_TOKEN`, and tag/push events from
+> `GITHUB_TOKEN` do **not** trigger other workflows (GitHub's recursion
+> prevention); `workflow_dispatch` / `repository_dispatch` are the documented
+> exceptions. So the `trigger-publish` job dispatches each publish workflow with
+> `gh workflow run <wf> --ref <tag>` rather than relying on the tag-push trigger.
+> Passing `--ref <tag>` makes `github.ref` a `refs/tags/*` ref inside each publish
+> run, which satisfies their `if: startsWith(github.ref, 'refs/tags/')` guards.
+>
+> Implementation detail worth knowing when editing the workflow: the job gates on
+> the aggregate `releases_created` output and reads the tag from the
+> **component-scoped** key `steps.release.outputs['crates/core--tag_name']` — not
+> the bare `tag_name`. release-please emits component-scoped outputs for this
+> manifest config, so the bare keys come back empty.
 
 ---
 
@@ -140,6 +150,26 @@ Practical guidance:
 - The package-only workflows refuse to tag if the scoped tag already exists or
   if the committed manifest versions do not match the requested version, and a
   `dry_run` exercises validation + build/test without tagging or publishing.
+
+---
+
+## CI gates on every PR (`tests.yml`)
+
+A bump PR (either package-only lane) and the release-please Release PR all run
+the same checks. All must be green before merging:
+
+| Job                            | What it covers                                            |
+| ------------------------------ | --------------------------------------------------------- |
+| `Manifest version consistency` | `scripts/check-release-versions.py` for python + npm: each binding's `package.json`/`pyproject.toml` agrees with its `Cargo.toml`. Catches a half-finished version bump. |
+| `test-rust`                    | `cargo test` across the workspace.                        |
+| `test-python (3.10–3.13)`      | `maturin develop` + `pytest` on each supported Python.    |
+| `test-js-wasm`                 | wasm build + Node parity tests.                           |
+
+The version-consistency job runs **without** an expected `--version`, so it only
+asserts internal agreement — it deliberately does not fail when a binding's
+version legitimately leads `crates/core` between releases (the package-only
+lanes). The exact-version check (`--version X.Y.Z`) runs inside the package
+release workflows instead, right before a tag is created.
 
 ---
 
