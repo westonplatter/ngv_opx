@@ -49,6 +49,15 @@ impl OptionParams {
     ) -> Self {
         Self::new(spot, strike, rate, volatility, days_to_maturity / 365.0, is_call)
     }
+
+    /// Whether this option is a call (`true`) or a put (`false`).
+    ///
+    /// `is_call` is stored as an `f32` so the struct is `Pod` and can be
+    /// uploaded straight to a GPU buffer. This accessor centralizes the
+    /// `> 0.5` decode so call sites don't repeat the magic comparison.
+    pub fn is_call_option(&self) -> bool {
+        self.is_call > 0.5
+    }
 }
 
 fn norm_cdf(x: f32) -> f32 {
