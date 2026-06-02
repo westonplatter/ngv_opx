@@ -1,6 +1,6 @@
 [package]
 name = "ngv-opx-gpu"
-version = "0.1.1"
+version = "0.1.2"
 edition.workspace = true
 license.workspace = true
 description = "wgpu/WGSL GPU backends for ngv-opx pricing and IV solving."
@@ -9,7 +9,7 @@ description = "wgpu/WGSL GPU backends for ngv-opx pricing and IV solving."
 name = "ngv_opx_gpu"
 
 [dependencies]
-ngv-opx-core = { path = "../core", version = "0.1.1" }
+ngv-opx-core = { path = "../core", version = "0.1.2" }
 wgpu = "23"
 pollster = "0.4"
 bytemuck = { version = "1.14", features = ["derive"] }
