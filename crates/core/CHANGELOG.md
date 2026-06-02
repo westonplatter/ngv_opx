@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/westonplatter/ngv_opx/compare/v0.1.1...v0.1.2) (2026-06-02)
+
+
+### Features
+
+* **core:** add OptionParams::is_call_option() + GPU pricing example ([#17](https://github.com/westonplatter/ngv_opx/issues/17)) ([1deaa9a](https://github.com/westonplatter/ngv_opx/commit/1deaa9a9a1772aeba718e294380af7cdbba233ca))
+
 ## [0.1.1](https://github.com/westonplatter/ngv_opx/compare/0.1.0...v0.1.1) (2026-05-29)
 
 
