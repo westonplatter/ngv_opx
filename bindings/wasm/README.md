@@ -1,11 +1,11 @@
-# @ngv/opx
+# @westonplatter/ngv-opx
 
 Black-76 option pricing and implied-volatility solver for **browsers and Node**, compiled from Rust to WebAssembly. f64 throughout — same numeric contract as the Python binding.
 
 ## Install
 
 ```bash
-npm install @ngv/opx
+npm install @westonplatter/ngv-opx
 ```
 
 ## Quick start
@@ -13,7 +13,7 @@ npm install @ngv/opx
 ### Node (ESM)
 
 ```ts
-import { black76, impliedVolBatch } from "@ngv/opx";
+import { black76, impliedVolBatch } from "@westonplatter/ngv-opx";
 
 // Single option
 const price = black76(75, 75, 0.045, 0.35, 30 / 365, /* isCall */ true);
@@ -32,7 +32,7 @@ const ivs = impliedVolBatch(
 ### Node (CommonJS)
 
 ```js
-const opx = require("@ngv/opx");
+const opx = require("@westonplatter/ngv-opx");
 const price = opx.black76(75, 75, 0.045, 0.35, 30 / 365, true);
 ```
 
@@ -41,7 +41,7 @@ const price = opx.black76(75, 75, 0.045, 0.35, 30 / 365, true);
 The browser entry requires `await init()` before first use.
 
 ```ts
-import { init, black76, impliedVolBatch } from "@ngv/opx";
+import { init, black76, impliedVolBatch } from "@westonplatter/ngv-opx";
 
 await init();
 const price = black76(75, 75, 0.045, 0.35, 30 / 365, true);

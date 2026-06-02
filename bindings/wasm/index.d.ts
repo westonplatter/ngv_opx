@@ -1,4 +1,4 @@
-// Public TypeScript surface for @ngv/opx.
+// Public TypeScript surface for @westonplatter/ngv-opx.
 //
 // All numerics are f64. Browser and Node entries expose the same functions;
 // the browser entry also requires `await init()` before first use.
@@ -92,7 +92,7 @@ export interface InitResult {
  * 404. Example (Vite):
  *
  * ```ts
- * import wasmUrl from "@ngv/opx/pkg-web/ngv_opx_wasm_bg.wasm?url";
+ * import wasmUrl from "@westonplatter/ngv-opx/pkg-web/ngv_opx_wasm_bg.wasm?url";
  * await init({ wasmUrl });
  * ```
  */

@@ -1,8 +1,8 @@
 # ngv-opx web demo
 
-Tiny Vite + TypeScript app that proves the `@ngv/opx` browser entry works end-to-end. Computes Black-76 implied vol live as you type, plus a 10 000-contract batch benchmark.
+Tiny Vite + TypeScript app that proves the `@westonplatter/ngv-opx` browser entry works end-to-end. Computes Black-76 implied vol live as you type, plus a 10 000-contract batch benchmark.
 
-This demo consumes `@ngv/opx` via a local `file:` link to `../../bindings/wasm/`, so the wasm package must be built first.
+This demo consumes `@westonplatter/ngv-opx` via a local `file:` link to `../../bindings/wasm/`, so the wasm package must be built first.
 
 ## Run
 
@@ -24,7 +24,7 @@ Vite will open `http://localhost:5173` automatically. With the default inputs (F
 
 ## Iterating on the wasm package
 
-The demo links `@ngv/opx` from `../../bindings/wasm/` at `npm install` time — npm hardlinks/copies the package's files, so **changes to `bindings/wasm/` do not propagate automatically**. After editing the wasm crate or the JS shims:
+The demo links `@westonplatter/ngv-opx` from `../../bindings/wasm/` at `npm install` time — npm hardlinks/copies the package's files, so **changes to `bindings/wasm/` do not propagate automatically**. After editing the wasm crate or the JS shims:
 
 ```bash
 # Rebuild wasm artifacts.

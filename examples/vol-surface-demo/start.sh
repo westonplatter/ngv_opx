@@ -2,7 +2,7 @@
 set -e
 REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 
-echo "==> Building @ngv/opx WASM (browser target)…"
+echo "==> Building @westonplatter/ngv-opx WASM (browser target)…"
 (cd "$REPO_ROOT/bindings/wasm" && wasm-pack build --target web --out-dir pkg-web)
 
 echo "==> Installing frontend dependencies…"

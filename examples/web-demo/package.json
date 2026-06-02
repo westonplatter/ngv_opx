@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@ngv/opx": "file:../../bindings/wasm"
+    "@westonplatter/ngv-opx": "file:../../bindings/wasm"
   },
   "devDependencies": {
     "vite": "^5.4.0",

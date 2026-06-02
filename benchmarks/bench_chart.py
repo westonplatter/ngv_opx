@@ -99,8 +99,8 @@ def collect():
         "Python — numpy/scipy":            {},
         "Python — ngv_opx (single)":       {},
         "Python — ngv_opx (vectorized)":   {},
-        "JavaScript — @ngv/opx (single)":     {},
-        "JavaScript — @ngv/opx (vectorized)": {},
+        "JavaScript — @westonplatter/ngv-opx (single)":     {},
+        "JavaScript — @westonplatter/ngv-opx (vectorized)": {},
         "Rust — ngv_opx (vectorized)":         {},
     }
     for n in SIZES:
@@ -159,9 +159,9 @@ def collect():
         )
         js = json.loads(js_proc.stdout.strip().splitlines()[-1])
         for n_str, ns in js["js-single"].items():
-            paths["JavaScript — @ngv/opx (single)"][int(n_str)] = float(ns)
+            paths["JavaScript — @westonplatter/ngv-opx (single)"][int(n_str)] = float(ns)
         for n_str, ns in js["js-vec"].items():
-            paths["JavaScript — @ngv/opx (vectorized)"][int(n_str)] = float(ns)
+            paths["JavaScript — @westonplatter/ngv-opx (vectorized)"][int(n_str)] = float(ns)
     except (subprocess.CalledProcessError, FileNotFoundError) as e:
         print(f"  warning: skipping JS rows — {type(e).__name__}: {e}", flush=True)
 
@@ -186,8 +186,8 @@ def render(paths) -> Path:
         "Python — ngv_opx (vectorized)",
     ]
     JS_GROUP = [
-        "JavaScript — @ngv/opx (single)",
-        "JavaScript — @ngv/opx (vectorized)",
+        "JavaScript — @westonplatter/ngv-opx (single)",
+        "JavaScript — @westonplatter/ngv-opx (vectorized)",
     ]
     RUST_GROUP = [
         "Rust — ngv_opx (vectorized)",
@@ -209,8 +209,8 @@ def render(paths) -> Path:
         "Python — numpy/scipy":                "#333333",   # darkest grey
         "Python — ngv_opx (single)":           "#4a90e2",   # blue
         "Python — ngv_opx (vectorized)":       "#1f5fb5",   # darker blue
-        "JavaScript — @ngv/opx (single)":      "#3aa657",   # green
-        "JavaScript — @ngv/opx (vectorized)":  "#1f7a3b",   # darker green
+        "JavaScript — @westonplatter/ngv-opx (single)":      "#3aa657",   # green
+        "JavaScript — @westonplatter/ngv-opx (vectorized)":  "#1f7a3b",   # darker green
         "Rust — ngv_opx (vectorized)":         "#7b3fb5",   # purple
     }
     dash = {n: ("dot" if n in PYTHON_GROUP else "solid") for n in ORDERED}
@@ -265,7 +265,7 @@ def render(paths) -> Path:
     # ---- Table: 3-line stacked header per column ----
     # Each header cell renders:
     #   Row 1: LANGUAGE chip (PYTHON / JAVASCRIPT / RUST)
-    #   Row 2: library name  (py_vollib, ngv_opx, @ngv/opx, math.erf, numpy/scipy)
+    #   Row 2: library name  (py_vollib, ngv_opx, @westonplatter/ngv-opx, math.erf, numpy/scipy)
     #   Row 3: variant       (single / vectorized / —)
     # Cells stack vertically inside one Plotly header row, so column widths
     # can shrink and the eye groups by language first, then library, then
@@ -276,8 +276,8 @@ def render(paths) -> Path:
         "Python — numpy/scipy":                "numpy/scipy",
         "Python — ngv_opx (single)":           "ngv_opx",
         "Python — ngv_opx (vectorized)":       "ngv_opx",
-        "JavaScript — @ngv/opx (single)":      "@ngv/opx",
-        "JavaScript — @ngv/opx (vectorized)":  "@ngv/opx",
+        "JavaScript — @westonplatter/ngv-opx (single)":      "@westonplatter/ngv-opx",
+        "JavaScript — @westonplatter/ngv-opx (vectorized)":  "@westonplatter/ngv-opx",
         "Rust — ngv_opx (vectorized)":         "ngv_opx",
     }
     variant_label = {
@@ -286,8 +286,8 @@ def render(paths) -> Path:
         "Python — numpy/scipy":                "vectorized",
         "Python — ngv_opx (single)":           "single",
         "Python — ngv_opx (vectorized)":       "vectorized",
-        "JavaScript — @ngv/opx (single)":      "single",
-        "JavaScript — @ngv/opx (vectorized)":  "vectorized",
+        "JavaScript — @westonplatter/ngv-opx (single)":      "single",
+        "JavaScript — @westonplatter/ngv-opx (vectorized)":  "vectorized",
         "Rust — ngv_opx (vectorized)":         "vectorized",
     }
 
@@ -381,10 +381,10 @@ def render(paths) -> Path:
                 f"Black-76 pricing throughput — Python {pyver}<br>"
                 f"<sub>"
                 # Legend order matches the table column order: other libs,
-                # Python ngv_opx, JS @ngv/opx, Rust native.
+                # Python ngv_opx, JS @westonplatter/ngv-opx, Rust native.
                 f"<span style='color:#555'>● other Python libs</span>"
                 f" &nbsp;·&nbsp; <span style='color:#1f5fb5'>● Python ngv_opx</span>"
-                f" &nbsp;·&nbsp; <span style='color:#1f7a3b'>● JS @ngv/opx (wasm)</span>"
+                f" &nbsp;·&nbsp; <span style='color:#1f7a3b'>● JS @westonplatter/ngv-opx (wasm)</span>"
                 f" &nbsp;·&nbsp; <span style='color:#7b3fb5'>● Rust ngv_opx (native)</span>"
                 f"</sub>"
             ),

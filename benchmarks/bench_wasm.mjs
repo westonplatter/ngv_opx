@@ -1,4 +1,4 @@
-// Node-side Black-76 benchmark for the @ngv/opx wasm binding.
+// Node-side Black-76 benchmark for the @westonplatter/ngv-opx wasm binding.
 //
 // Mirrors the Python rs-single / rs-vec rows but with the JS/wasm caller.
 // Generates a synthetic WTI book at every N in SIZES, times two paths
