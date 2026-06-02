@@ -1,7 +1,9 @@
 name: publish-python
 
 # Builds pre-compiled wheels for all major platforms and publishes to PyPI.
-# Trigger: push a semver tag (e.g. v0.1.0) or run manually.
+# Trigger: a shared core tag (v0.1.0) or a Python package-only tag
+# (python-v0.1.2), or a manual dispatch. Both tag shapes publish to PyPI;
+# only the shared v* tag also publishes crates.io (see publish-crate.yml).
 #
 # The Rust code is compiled INTO each wheel (.so / .pyd). End users need no
 # Rust toolchain — they get a pure binary wheel from PyPI.
@@ -28,7 +30,9 @@ name: publish-python
 
 on:
   push:
-    tags: ["v[0-9]+.[0-9]+.[0-9]+"]
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"          # shared core release
+      - "python-v[0-9]+.[0-9]+.[0-9]+"   # Python package-only release
   workflow_dispatch:
 
 permissions:

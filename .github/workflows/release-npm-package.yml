@@ -1,0 +1,134 @@
+name: release-npm-package
+
+# NPM PACKAGE-ONLY RELEASE LANE (manual operator action).
+#
+# Use this for binding-only changes that do NOT need a Rust core release:
+# JS init behavior, type definitions, package exports, README, etc.
+#
+# Prerequisite: a PR has already bumped the wasm binding versions to the
+# requested value and been merged to main:
+#   - bindings/wasm/package.json  version
+#   - bindings/wasm/Cargo.toml    package.version
+#
+# This workflow validates that state, builds + smoke-tests the package as a
+# dry run, and — only when dry_run=false — creates the scoped tag
+# `npm-vX.Y.Z` and dispatches publish-npm.yml at that tag. The tag is created
+# with GITHUB_TOKEN (which does NOT fire tag-push workflows), so we dispatch
+# the publish explicitly to avoid a double publish.
+#
+# This lane never touches crates.io or PyPI.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Semver to release, no leading v (e.g. 0.1.2). Must already be committed to main."
+        required: true
+        type: string
+      dry_run:
+        description: "Validate + build only; do not tag or publish."
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    name: Release @ngv/opx ${{ inputs.version }} to npm
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write   # create + push the scoped tag
+      actions: write    # dispatch publish-npm.yml
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0   # need tags to check for collisions
+
+      - name: Set up Python (for version check script)
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.x"
+
+      - name: Validate semver
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::version '$VERSION' is not a bare semver (X.Y.Z)"
+            exit 1
+          fi
+
+      - name: Ensure scoped tag does not already exist
+        env:
+          TAG: npm-v${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "::error::tag $TAG already exists"
+            exit 1
+          fi
+          echo "OK: $TAG is free"
+
+      - name: Check manifest versions match requested version
+        run: python3 scripts/check-release-versions.py --package npm --version "${{ inputs.version }}"
+
+      - name: Install Rust toolchain (with wasm32 target)
+        uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # stable
+        with:
+          toolchain: stable
+          targets: wasm32-unknown-unknown
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
+        with:
+          workspaces: . -> target
+
+      - name: Install wasm-pack
+        run: cargo install wasm-pack --locked
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "20"
+
+      - name: Build WASM (browser + node) and smoke-test
+        working-directory: bindings/wasm
+        run: |
+          set -euo pipefail
+          wasm-pack build --target web --out-dir pkg-web --release
+          wasm-pack build --target nodejs --out-dir pkg-node --release
+          node tests/u4_black76.mjs
+          node tests/u5_iv.mjs
+          node tests/u8_package_shape.mjs
+
+      - name: Create and push scoped tag
+        if: ${{ !inputs.dry_run }}
+        env:
+          TAG: npm-v${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "npm package release $TAG"
+          git push origin "$TAG"
+
+      - name: Dispatch publish-npm.yml at scoped tag
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: npm-v${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          gh workflow run publish-npm.yml --ref "$TAG"
+          echo "Dispatched publish-npm.yml at $TAG"
+
+      - name: Dry-run summary
+        if: ${{ inputs.dry_run }}
+        run: |
+          echo "Dry run complete. Validation + build + tests passed for ${{ inputs.version }}."
+          echo "Re-run with dry_run=false to tag npm-v${{ inputs.version }} and publish."

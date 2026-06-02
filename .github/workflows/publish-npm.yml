@@ -1,7 +1,9 @@
 name: publish-npm
 
 # Compiles the WASM binding and publishes @ngv/opx to npm.
-# Trigger: push a semver tag (e.g. v0.1.0) or run manually.
+# Trigger: a shared core tag (v0.1.0) or an npm package-only tag
+# (npm-v0.1.2), or a manual dispatch. Both tag shapes publish to npm;
+# only the shared v* tag also publishes crates.io (see publish-crate.yml).
 #
 # The compiled .wasm binary is bundled directly into the npm package.
 # Consumers run: npm install @ngv/opx
@@ -17,7 +19,9 @@ name: publish-npm
 
 on:
   push:
-    tags: ["v[0-9]+.[0-9]+.[0-9]+"]
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"       # shared core release
+      - "npm-v[0-9]+.[0-9]+.[0-9]+"   # npm package-only release
   workflow_dispatch:
 
 permissions:
