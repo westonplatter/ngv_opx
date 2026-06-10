@@ -153,17 +153,17 @@ Practical guidance:
 
 ---
 
-## CI gates on every PR (`tests.yml`)
+## CI gates on every PR (`tests.yml` + `wasm.yml`)
 
 A bump PR (either package-only lane) and the release-please Release PR all run
 the same checks. All must be green before merging:
 
-| Job                            | What it covers                                            |
-| ------------------------------ | --------------------------------------------------------- |
-| `Manifest version consistency` | `scripts/check-release-versions.py` for python + npm: each binding's `package.json`/`pyproject.toml` agrees with its `Cargo.toml`. Catches a half-finished version bump. |
-| `test-rust`                    | `cargo test` across the workspace.                        |
-| `test-python (3.10–3.13)`      | `maturin develop` + `pytest` on each supported Python.    |
-| `test-js-wasm`                 | wasm build + Node parity tests.                           |
+| Job                            | Workflow     | What it covers                                            |
+| ------------------------------ | ------------ | --------------------------------------------------------- |
+| `Manifest version consistency` | `tests.yml`  | `scripts/check-release-versions.py` for python + npm: each binding's `package.json`/`pyproject.toml` agrees with its `Cargo.toml`. Catches a half-finished version bump. |
+| `test-rust`                    | `tests.yml`  | `cargo test` across the workspace.                        |
+| `test-python (3.10–3.13)`      | `tests.yml`  | `maturin develop` + `pytest` on each supported Python.    |
+| `test-js-wasm`                 | `wasm.yml`   | wasm build + Node parity tests.                           |
 
 The version-consistency job runs **without** an expected `--version`, so it only
 asserts internal agreement — it deliberately does not fail when a binding's
