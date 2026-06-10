@@ -58,6 +58,14 @@ impl OptionParams {
     pub fn is_call_option(&self) -> bool {
         self.is_call > 0.5
     }
+
+    /// Whether this option is a put (`true`) or a call (`false`).
+    ///
+    /// The inverse of [`is_call_option`](Self::is_call_option), provided so put
+    /// branches read naturally without negating the call accessor.
+    pub fn is_put_option(&self) -> bool {
+        !self.is_call_option()
+    }
 }
 
 fn norm_cdf(x: f32) -> f32 {
