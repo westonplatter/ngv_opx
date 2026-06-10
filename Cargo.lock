@@ -539,7 +539,7 @@ dependencies = [
 
 [[package]]
 name = "ngv-opx-core"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "bytemuck",
  "libm",
@@ -548,7 +548,7 @@ dependencies = [
 
 [[package]]
 name = "ngv-opx-gpu"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "bytemuck",
  "ngv-opx-core",
@@ -558,7 +558,7 @@ dependencies = [
 
 [[package]]
 name = "ngv-opx-python"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "ngv-opx-core",
  "ngv-opx-gpu",
@@ -568,7 +568,7 @@ dependencies = [
 
 [[package]]
 name = "ngv-opx-wasm"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "js-sys",
  "ngv-opx-core",
