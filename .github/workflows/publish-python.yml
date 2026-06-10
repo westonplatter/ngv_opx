@@ -18,7 +18,6 @@ name: publish-python
 # Platform matrix:
 #   Linux   — manylinux  x86_64 + aarch64     (glibc, covers most distros)
 #   Linux   — musllinux  x86_64 + aarch64     (Alpine / musl-libc)
-#   macOS   — x86_64 (Intel, macos-13 runner)
 #   macOS   — aarch64 (Apple Silicon, macos-latest runner)
 #   Windows — x86_64
 #
@@ -125,8 +124,6 @@ jobs:
       fail-fast: false
       matrix:
         platform:
-          - runner: macos-13        # Intel x86_64
-            target: x86_64-apple-darwin
           - runner: macos-latest    # Apple Silicon aarch64
             target: aarch64-apple-darwin
     steps:
