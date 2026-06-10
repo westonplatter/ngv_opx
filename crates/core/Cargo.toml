@@ -1,6 +1,6 @@
 [package]
 name = "ngv-opx-core"
-version = "0.1.2"
+version = "0.1.3"
 edition.workspace = true
 license.workspace = true
 description = "Pure-Rust option pricing core: Black-76 + Black-Scholes CPU, no FFI."
